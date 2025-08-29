@@ -71,7 +71,7 @@ int main() {
   const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, MNIST_NUM_CLASSES};
   const int NUM_LAYERS = sizeof(ARCHITECTURE) / sizeof(int);
 #define POPULATION_SIZE 50
-#define NUM_GENERATIONS 100
+#define NUM_GENERATIONS 5000
   const float MUTATION_RATE = 0.5f;
   const float MUTATION_CHANCE = 0.25f;
 
@@ -118,7 +118,8 @@ int main() {
     const int TOURNAMENT_SIZE = 4;
     int num_fittest;
     NetworkFitness *fittest_networks_info =
-        select_fittest(population_with_fitness, POPULATION_SIZE, &num_fittest, SELECTION_TYPE, TOURNAMENT_SIZE);
+        select_fittest(population_with_fitness, POPULATION_SIZE, &num_fittest,
+                       SELECTION_TYPE, TOURNAMENT_SIZE);
 
     NeuralNetwork **new_population =
         reproduce(fittest_networks_info, num_fittest, POPULATION_SIZE,

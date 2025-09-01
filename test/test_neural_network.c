@@ -7,7 +7,8 @@ extern const double TEST_EPSILON;
 // Test for neural network creation
 const char* test_nn_creation() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* net = create_neural_network(3, architecture);
+    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    initialize_network(net);
 
     mu_assert("NN creation failed", net != NULL);
     mu_assert("NN num_layers is wrong", net->num_layers == 3);
@@ -35,7 +36,7 @@ const char* test_nn_creation() {
 // Test for the forward pass
 const char* test_nn_forward_pass() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* net = create_neural_network(3, architecture);
+    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
 
     // Manually set weights and biases for a predictable outcome
     // Layer 1 weights: [[0.1, 0.2], [0.3, 0.4]]

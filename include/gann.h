@@ -16,17 +16,21 @@
 
 /**
  * @brief Parameters for the gann_train function.
+ *
+ * This struct holds all the parameters needed to configure the training process
+ * for the genetic algorithm neural network.
  */
 typedef struct {
-    const int* architecture;
-    int num_layers;
-    int population_size;
-    int num_generations;
-    float mutation_rate;
-    float mutation_chance;
-    int fitness_samples; // Number of samples from the dataset to use for fitness evaluation
-    SelectionType selection_type;
-    int tournament_size;
+    const int* architecture;        /**< An array defining the number of neurons in each layer. */
+    int num_layers;                 /**< The total number of layers in the network. */
+    int population_size;            /**< The number of networks in each generation. */
+    int num_generations;            /**< The number of generations to run the evolution for. */
+    float mutation_rate;            /**< The magnitude of mutations when they occur. */
+    float mutation_chance;          /**< The probability of a mutation occurring on any given weight or bias. */
+    int fitness_samples;            /**< The number of samples from the dataset to use for fitness evaluation in each generation. Use 0 for the full dataset. */
+    SelectionType selection_type;   /**< The method for selecting the fittest individuals (e.g., ELITE, TOURNAMENT). */
+    int tournament_size;            /**< The number of individuals to compete in a tournament, if tournament selection is used. */
+    ActivationType activation_hidden; /**< The activation function to use for the hidden layers. */
 } GannTrainParams;
 
 /**

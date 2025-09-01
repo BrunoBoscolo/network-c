@@ -1,95 +1,43 @@
 #include "neural_network.h"
+#include "matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 
-// --- Matrix Operations Implementation ---
-
-// Creates and allocates memory for a new matrix
-Matrix* create_matrix(int rows, int cols) {
-    Matrix* m = (Matrix*)malloc(sizeof(Matrix));
-    if (!m) return NULL;
-
-    m->rows = rows;
-    m->cols = cols;
-    m->data = (double**)malloc(rows * sizeof(double*));
-    if (!m->data) {
-        free(m);
-        return NULL;
-    }
-
-    for (int i = 0; i < rows; i++) {
-        m->data[i] = (double*)calloc(cols, sizeof(double));
-        if (!m->data[i]) {
-            // Rollback allocation on failure
-            for (int j = 0; j < i; j++) free(m->data[j]);
-            free(m->data);
-            free(m);
-            return NULL;
-        }
-    }
-    return m;
-}
-
-// Frees the memory of a matrix
-void free_matrix(Matrix* m) {
-    if (!m) return;
-    for (int i = 0; i < m->rows; i++) {
-        free(m->data[i]);
-    }
-    free(m->data);
-    free(m);
-}
-
-// Prints the matrix data (for debugging)
-void print_matrix(const Matrix* m) {
-    if (!m) return;
-    for (int i = 0; i < m->rows; i++) {
-        for (int j = 0; j < m->cols; j++) {
-            printf("%f ", m->data[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-// Computes the dot product of two matrices
-Matrix* dot_product(const Matrix* m1, const Matrix* m2) {
-    if (m1->cols != m2->rows) return NULL;
-
-    Matrix* result = create_matrix(m1->rows, m2->cols);
-    if (!result) return NULL;
-
-    for (int i = 0; i < m1->rows; i++) {
-        for (int j = 0; j < m2->cols; j++) {
-            for (int k = 0; k < m1->cols; k++) {
-                result->data[i][j] += m1->data[i][k] * m2->data[k][j];
-            }
-        }
-    }
-    return result;
-}
-
-// Adds a bias vector to each row of a matrix
-void add_bias(Matrix* m, const Matrix* bias) {
-    if (m->cols != bias->cols || bias->rows != 1) return;
-    for (int i = 0; i < m->rows; i++) {
-        for (int j = 0; j < m->cols; j++) {
-            m->data[i][j] += bias->data[0][j];
-        }
-    }
-}
+// --- Activation Functions ---
 
 // Sigmoid activation function
 double sigmoid(double x) {
     return 1.0 / (1.0 + exp(-x));
 }
 
-// Applies the sigmoid function element-wise to a matrix
-void apply_sigmoid(Matrix* m) {
+// ReLU activation function
+double relu(double x) {
+    return x > 0 ? x : 0;
+}
+
+// Leaky ReLU activation function
+double leaky_relu(double x) {
+    return x > 0 ? x : 0.01 * x;
+}
+
+// Applies the specified activation function element-wise to a matrix
+void apply_activation(Matrix* m, ActivationType activation_type) {
     for (int i = 0; i < m->rows; i++) {
         for (int j = 0; j < m->cols; j++) {
-            m->data[i][j] = sigmoid(m->data[i][j]);
+            double* val = &m->data[i][j];
+            switch (activation_type) {
+                case SIGMOID:
+                    *val = sigmoid(*val);
+                    break;
+                case RELU:
+                    *val = relu(*val);
+                    break;
+                case LEAKY_RELU:
+                    *val = leaky_relu(*val);
+                    break;
+            }
         }
     }
 }
@@ -97,34 +45,69 @@ void apply_sigmoid(Matrix* m) {
 // --- Neural Network Operations Implementation ---
 
 // Creates and allocates memory for a neural network
-NeuralNetwork* create_neural_network(int num_layers, const int* architecture) {
+NeuralNetwork* create_neural_network(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
+    if (num_layers < 2) return NULL; // A network must have at least an input and an output layer
+
     NeuralNetwork* net = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
+    if (!net) return NULL;
+
     net->num_layers = num_layers;
+    net->activation_hidden = activation_hidden;
+    net->activation_output = activation_output;
     net->architecture = (int*)malloc(num_layers * sizeof(int));
+    if (!net->architecture) {
+        free(net);
+        return NULL;
+    }
     for(int i=0; i<num_layers; i++) net->architecture[i] = architecture[i];
 
     net->weights = (Matrix**)malloc((num_layers - 1) * sizeof(Matrix*));
+    if (!net->weights) {
+        free(net->architecture);
+        free(net);
+        return NULL;
+    }
+
     net->biases = (Matrix**)malloc((num_layers - 1) * sizeof(Matrix*));
+    if (!net->biases) {
+        free(net->weights);
+        free(net->architecture);
+        free(net);
+        return NULL;
+    }
 
     for (int i = 0; i < num_layers - 1; i++) {
         net->weights[i] = create_matrix(architecture[i], architecture[i+1]);
+        if (!net->weights[i]) {
+            // Rollback
+            for (int j = 0; j < i; j++) free_matrix(net->weights[j]);
+            free(net->weights);
+            free(net->biases); // Biases for this layer were not allocated yet
+            free(net->architecture);
+            free(net);
+            return NULL;
+        }
         net->biases[i] = create_matrix(1, architecture[i+1]);
+        if (!net->biases[i]) {
+            // Rollback
+            free_matrix(net->weights[i]); // Free the weight matrix for the current layer
+            for (int j = 0; j < i; j++) {
+                free_matrix(net->weights[j]);
+                free_matrix(net->biases[j]);
+            }
+            free(net->weights);
+            free(net->biases);
+            free(net->architecture);
+            free(net);
+            return NULL;
+        }
     }
-
-    initialize_network(net);
 
     return net;
 }
 
 // Initializes network with random weights and zero biases
 void initialize_network(NeuralNetwork* net) {
-    // Seed random number generator
-    static int seeded = 0;
-    if (!seeded) {
-        srand(time(NULL));
-        seeded = 1;
-    }
-
     for (int i = 0; i < net->num_layers - 1; i++) {
         // He-et-al initialization for weights
         for (int r = 0; r < net->weights[i]->rows; r++) {
@@ -153,22 +136,32 @@ void free_neural_network(NeuralNetwork* net) {
 Matrix* forward_pass(const NeuralNetwork* net, const Matrix* input) {
     if (input->cols != net->architecture[0]) return NULL;
 
-    Matrix* current_output = create_matrix(input->rows, input->cols);
-    for(int i=0; i<input->rows; i++) {
-        for(int j=0; j<input->cols; j++) {
-            current_output->data[i][j] = input->data[i][j];
-        }
-    }
-
+    Matrix* current_output = (Matrix*)input; // Start with the input, no copy
+    int input_was_copied = 0; // Flag to track if we need to free current_output
 
     for (int i = 0; i < net->num_layers - 1; i++) {
         Matrix* next_output = dot_product(current_output, net->weights[i]);
+        if (!next_output) {
+            if (input_was_copied) free_matrix(current_output);
+            return NULL;
+        }
+
         add_bias(next_output, net->biases[i]);
 
-        apply_sigmoid(next_output);
+        // Apply activation function
+        // Use hidden layer activation for all but the last layer
+        if (i < net->num_layers - 2) {
+            apply_activation(next_output, net->activation_hidden);
+        } else {
+            apply_activation(next_output, net->activation_output);
+        }
 
-        free_matrix(current_output);
+        if (input_was_copied) {
+            free_matrix(current_output);
+        }
+
         current_output = next_output;
+        input_was_copied = 1; // From now on, current_output is a new matrix
     }
 
     return current_output;
@@ -200,7 +193,8 @@ void mutate_network(NeuralNetwork* net, float mutation_rate, float mutation_chan
 NeuralNetwork* clone_network(const NeuralNetwork* src_net) {
     if (!src_net) return NULL;
 
-    NeuralNetwork* new_net = create_neural_network(src_net->num_layers, src_net->architecture);
+    NeuralNetwork* new_net = create_neural_network(src_net->num_layers, src_net->architecture, src_net->activation_hidden, src_net->activation_output);
+    if (!new_net) return NULL;
 
     for (int i = 0; i < src_net->num_layers - 1; i++) {
         for (int r = 0; r < src_net->weights[i]->rows; r++) {
@@ -277,7 +271,9 @@ NeuralNetwork* load_network(const char* filepath) {
         }
     }
 
-    NeuralNetwork* net = create_neural_network(num_layers, architecture);
+    // For now, hardcode activation functions when loading older formats.
+    // A future improvement would be to version the file format.
+    NeuralNetwork* net = create_neural_network(num_layers, architecture, SIGMOID, SIGMOID);
     free(architecture); // create_neural_network makes a copy
     if (!net) {
         fclose(file);

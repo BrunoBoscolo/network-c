@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "gann.h"
 
 int main() {
+    // Seed the random number generator
+    srand(time(NULL));
+
     printf("--- Starting MNIST Training with the GANN Simple API ---\n");
 
     // --- 1. Load MNIST Data ---
@@ -24,7 +28,8 @@ int main() {
         .mutation_chance = 0.25f,
         .fitness_samples = 1000,
         .selection_type = TOURNAMENT,
-        .tournament_size = 4
+        .tournament_size = 4,
+        .activation_hidden = LEAKY_RELU
     };
 
     printf("Network architecture: [");

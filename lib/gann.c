@@ -65,13 +65,15 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
 // --- High-Level API Implementation ---
 
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
-    if (!params || !train_dataset) {
+    if (!params || !train_dataset || !params->architecture || params->num_layers < 2 ||
+        params->population_size <= 0 || params->num_generations <= 0 ||
+        params->mutation_rate < 0.0f || params->mutation_chance < 0.0f || params->mutation_chance > 1.0f) {
+        fprintf(stderr, "Error: Invalid parameters for gann_train.\n");
         return NULL;
     }
 
     // --- 1. Create Initial Population ---
-    srand(time(NULL));
-    NeuralNetwork** population = create_initial_population(params->population_size, params->num_layers, params->architecture);
+    NeuralNetwork** population = create_initial_population(params->population_size, params->num_layers, params->architecture, params->activation_hidden, SIGMOID);
     if (!population) {
         fprintf(stderr, "Failed to create initial population.\n");
         return NULL;
@@ -136,6 +138,7 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
 
 int gann_predict(const NeuralNetwork* net, const double* input_data) {
     if (!net || !input_data) {
+        fprintf(stderr, "Error: Invalid input to gann_predict.\n");
         return -1; // Invalid input
     }
 
@@ -165,6 +168,7 @@ int gann_predict(const NeuralNetwork* net, const double* input_data) {
 
 double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset) {
     if (!net || !dataset) {
+        fprintf(stderr, "Error: Invalid input to gann_evaluate.\n");
         return 0.0;
     }
 

@@ -5,12 +5,16 @@
 // --- Evolution Functions Implementation ---
 
 // Creates an initial population of neural networks
-NeuralNetwork** create_initial_population(int population_size, int num_layers, const int* architecture) {
+NeuralNetwork** create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
     NeuralNetwork** population = (NeuralNetwork**)malloc(population_size * sizeof(NeuralNetwork*));
     if (!population) return NULL;
 
     for (int i = 0; i < population_size; i++) {
-        population[i] = create_neural_network(num_layers, architecture);
+        population[i] = create_neural_network(num_layers, architecture, activation_hidden, activation_output);
+        if (population[i]) {
+            initialize_network(population[i]);
+        }
+        // TODO: Handle allocation failure
     }
     return population;
 }
@@ -92,7 +96,7 @@ NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* pare
     }
 
     // Create a new network with the same architecture
-    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture);
+    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
     if (!child) return NULL;
 
     // Perform uniform crossover for weights and biases

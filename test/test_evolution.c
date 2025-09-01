@@ -7,8 +7,8 @@ extern const double TEST_EPSILON;
 
 const char* test_crossover() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* parent1 = create_neural_network(3, architecture);
-    NeuralNetwork* parent2 = create_neural_network(3, architecture);
+    NeuralNetwork* parent1 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent2 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
 
     // Seed rand() for predictable crossover
     srand(42);

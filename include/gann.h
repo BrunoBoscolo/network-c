@@ -10,6 +10,7 @@
 #include "data_loader.h"
 #include "evolution.h"
 #include "neural_network.h"
+#include "backpropagation.h"
 
 
 // --- High-Level "Easy" API ---
@@ -43,6 +44,30 @@ typedef struct {
  * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
  */
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset);
+
+
+/**
+ * @brief Parameters for the gann_train_with_backprop function.
+ */
+typedef struct {
+    const int* architecture;        /**< An array defining the number of neurons in each layer. */
+    int num_layers;                 /**< The total number of layers in the network. */
+    double learning_rate;           /**< The step size for gradient descent. */
+    int epochs;                     /**< The number of times to iterate over the entire dataset. */
+    int batch_size;                 /**< The number of samples to process before updating weights. */
+    ActivationType activation_hidden; /**< The activation function to use for the hidden layers. */
+    ActivationType activation_output; /**< The activation function to use for the output layer. */
+} GannBackpropParams;
+
+/**
+ * @brief Trains a new neural network using backpropagation.
+ *
+ * @param params The backpropagation training parameters.
+ * @param train_dataset The dataset to train on.
+ * @return A pointer to the trained NeuralNetwork. The caller is responsible for freeing this network.
+ */
+NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset);
+
 
 /**
  * @brief Makes a prediction on a single input vector.

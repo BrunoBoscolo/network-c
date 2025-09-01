@@ -77,3 +77,111 @@ void add_bias(Matrix* m, const Matrix* bias) {
         }
     }
 }
+
+// Creates a new matrix that is the transpose of the input matrix
+Matrix* matrix_transpose(const Matrix* m) {
+    Matrix* result = create_matrix(m->cols, m->rows);
+    if (!result) return NULL;
+
+    for (int i = 0; i < m->rows; i++) {
+        for (int j = 0; j < m->cols; j++) {
+            result->data[j][i] = m->data[i][j];
+        }
+    }
+    return result;
+}
+
+// Performs element-wise multiplication (Hadamard product) of two matrices
+Matrix* matrix_elementwise_multiply(const Matrix* m1, const Matrix* m2) {
+    if (m1->rows != m2->rows || m1->cols != m2->cols) return NULL;
+
+    Matrix* result = create_matrix(m1->rows, m1->cols);
+    if (!result) return NULL;
+
+    for (int i = 0; i < m1->rows; i++) {
+        for (int j = 0; j < m1->cols; j++) {
+            result->data[i][j] = m1->data[i][j] * m2->data[i][j];
+        }
+    }
+    return result;
+}
+
+// Subtracts the second matrix from the first matrix
+Matrix* matrix_subtract(const Matrix* m1, const Matrix* m2) {
+    if (m1->rows != m2->rows || m1->cols != m2->cols) return NULL;
+
+    Matrix* result = create_matrix(m1->rows, m1->cols);
+    if (!result) return NULL;
+
+    for (int i = 0; i < m1->rows; i++) {
+        for (int j = 0; j < m1->cols; j++) {
+            result->data[i][j] = m1->data[i][j] - m2->data[i][j];
+        }
+    }
+    return result;
+}
+
+// Adds two matrices
+Matrix* matrix_add(const Matrix* m1, const Matrix* m2) {
+    if (m1->rows != m2->rows || m1->cols != m2->cols) return NULL;
+
+    Matrix* result = create_matrix(m1->rows, m1->cols);
+    if (!result) return NULL;
+
+    for (int i = 0; i < m1->rows; i++) {
+        for (int j = 0; j < m1->cols; j++) {
+            result->data[i][j] = m1->data[i][j] + m2->data[i][j];
+        }
+    }
+    return result;
+}
+
+// Scales a matrix by a scalar value
+Matrix* matrix_scale(const Matrix* m, double scalar) {
+    Matrix* result = create_matrix(m->rows, m->cols);
+    if (!result) return NULL;
+
+    for (int i = 0; i < m->rows; i++) {
+        for (int j = 0; j < m->cols; j++) {
+            result->data[i][j] = m->data[i][j] * scalar;
+        }
+    }
+    return result;
+}
+
+// Creates a matrix from a 1D array
+Matrix* matrix_from_array(const double* array, int rows, int cols) {
+    Matrix* m = create_matrix(rows, cols);
+    if (!m) return NULL;
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            m->data[i][j] = array[i * cols + j];
+        }
+    }
+    return m;
+}
+
+// Creates a deep copy of a matrix
+Matrix* matrix_copy(const Matrix* m) {
+    Matrix* copy = create_matrix(m->rows, m->cols);
+    if (!copy) return NULL;
+
+    for (int i = 0; i < m->rows; i++) {
+        for (int j = 0; j < m->cols; j++) {
+            copy->data[i][j] = m->data[i][j];
+        }
+    }
+    return copy;
+}
+
+// Extracts a single row from a matrix
+Matrix* matrix_get_row(const Matrix* m, int row) {
+    if (row < 0 || row >= m->rows) return NULL;
+    Matrix* result = create_matrix(1, m->cols);
+    if (!result) return NULL;
+    for (int j = 0; j < m->cols; j++) {
+        result->data[0][j] = m->data[row][j];
+    }
+    return result;
+}

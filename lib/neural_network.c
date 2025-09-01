@@ -22,6 +22,25 @@ double leaky_relu(double x) {
     return x > 0 ? x : 0.01 * x;
 }
 
+// --- Activation Function Derivatives ---
+
+// Derivative of the sigmoid function
+double sigmoid_derivative(double x) {
+    double s = sigmoid(x);
+    return s * (1 - s);
+}
+
+// Derivative of the ReLU function
+double relu_derivative(double x) {
+    return x > 0 ? 1 : 0;
+}
+
+// Derivative of the Leaky ReLU function
+double leaky_relu_derivative(double x) {
+    return x > 0 ? 1 : 0.01;
+}
+
+
 // Applies the specified activation function element-wise to a matrix
 void apply_activation(Matrix* m, ActivationType activation_type) {
     for (int i = 0; i < m->rows; i++) {
@@ -41,6 +60,27 @@ void apply_activation(Matrix* m, ActivationType activation_type) {
         }
     }
 }
+
+// Applies the derivative of the specified activation function element-wise to a matrix
+void apply_activation_derivative(Matrix* m, ActivationType activation_type) {
+    for (int i = 0; i < m->rows; i++) {
+        for (int j = 0; j < m->cols; j++) {
+            double* val = &m->data[i][j];
+            switch (activation_type) {
+                case SIGMOID:
+                    *val = sigmoid_derivative(*val);
+                    break;
+                case RELU:
+                    *val = relu_derivative(*val);
+                    break;
+                case LEAKY_RELU:
+                    *val = leaky_relu_derivative(*val);
+                    break;
+            }
+        }
+    }
+}
+
 
 // --- Neural Network Operations Implementation ---
 

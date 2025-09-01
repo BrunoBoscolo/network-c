@@ -30,6 +30,15 @@ typedef struct {
  */
 void apply_activation(Matrix* m, ActivationType activation_type);
 
+/**
+ * @brief Applies the derivative of an activation function element-wise to a matrix.
+ * This is used during backpropagation.
+ * @param m The matrix to which the derivative will be applied.
+ * @param activation_type The type of activation function derivative to apply.
+ */
+void apply_activation_derivative(Matrix* m, ActivationType activation_type);
+
+
 // --- Neural Network Operations ---
 
 /**

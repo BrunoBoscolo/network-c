@@ -15,6 +15,9 @@ const char* test_save_and_load_network();
 // test_evolution.c
 const char* test_crossover();
 
+// test_backpropagation.c
+const char* test_backprop_overfit_single_instance();
+
 // Add declarations for other test suites here
 
 // A function to run all test suites

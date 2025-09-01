@@ -1,5 +1,5 @@
 #include "minunit.h"
-#include "../include/neural_network.h"
+#include "neural_network.h"
 #include <stdio.h>
 #include <math.h>
 

@@ -1,6 +1,7 @@
 #include "minunit.h"
-#include "../include/evolution.h"
+#include "evolution.h"
 #include <math.h>
+#include <stdlib.h>
 
 extern const double TEST_EPSILON;
 
@@ -8,6 +9,9 @@ const char* test_crossover() {
     int architecture[] = {2, 2, 1};
     NeuralNetwork* parent1 = create_neural_network(3, architecture);
     NeuralNetwork* parent2 = create_neural_network(3, architecture);
+
+    // Seed rand() for predictable crossover
+    srand(42);
 
     // Manually set weights and biases for parents
     parent1->weights[0]->data[0][0] = 0.1;
@@ -18,15 +22,17 @@ const char* test_crossover() {
     NeuralNetwork* child = crossover(parent1, parent2);
     mu_assert("Crossover failed to create a child", child != NULL);
 
-    // Check that child's weight is the average of parents'
-    double expected_weight = (0.1 + 0.3) / 2.0;
-    double actual_weight = child->weights[0]->data[0][0];
-    mu_assert("Crossover weight calculation is incorrect", fabs(actual_weight - expected_weight) < TEST_EPSILON);
+    // Check if the child's weight is from one of the parents
+    double child_weight = child->weights[0]->data[0][0];
+    int is_from_parent1 = fabs(child_weight - parent1->weights[0]->data[0][0]) < TEST_EPSILON;
+    int is_from_parent2 = fabs(child_weight - parent2->weights[0]->data[0][0]) < TEST_EPSILON;
+    mu_assert("Child weight is not from either parent", is_from_parent1 || is_from_parent2);
 
-    // Check that child's bias is the average of parents'
-    double expected_bias = (0.5 + 0.7) / 2.0;
-    double actual_bias = child->biases[0]->data[0][0];
-    mu_assert("Crossover bias calculation is incorrect", fabs(actual_bias - expected_bias) < TEST_EPSILON);
+    // Check if the child's bias is from one of the parents
+    double child_bias = child->biases[0]->data[0][0];
+    is_from_parent1 = fabs(child_bias - parent1->biases[0]->data[0][0]) < TEST_EPSILON;
+    is_from_parent2 = fabs(child_bias - parent2->biases[0]->data[0][0]) < TEST_EPSILON;
+    mu_assert("Child bias is not from either parent", is_from_parent1 || is_from_parent2);
 
     free_neural_network(parent1);
     free_neural_network(parent2);

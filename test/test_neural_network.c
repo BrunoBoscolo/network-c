@@ -1,5 +1,5 @@
 #include "minunit.h"
-#include "../include/neural_network.h"
+#include "neural_network.h"
 #include <math.h>
 
 extern const double TEST_EPSILON;

@@ -6,3 +6,6 @@ channel = "stable-25_05"
 
 [deployment]
 build = ["sh", "-c", "make"]
+
+[agent]
+expertMode = true

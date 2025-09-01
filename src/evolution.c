@@ -24,8 +24,8 @@ int compare_fitness(const void* a, const void* b) {
     return 0;
 }
 
-// Selects the fittest networks from a population
-NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest) {
+// Selects the top-performing networks (elitism)
+NetworkFitness* select_fittest_elitism(NetworkFitness* population_with_fitness, int population_size, int* num_fittest) {
     // Sort the population by fitness
     qsort(population_with_fitness, population_size, sizeof(NetworkFitness), compare_fitness);
 
@@ -44,8 +44,48 @@ NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int popu
     return fittest;
 }
 
-// Performs crossover between two parent networks to produce a child.
-// The child's weights and biases are the average of the parents'.
+// Selects networks using a tournament
+NetworkFitness* select_fittest_tournament(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, int tournament_size) {
+    *num_fittest = population_size / 2;
+    NetworkFitness* fittest = (NetworkFitness*)malloc(*num_fittest * sizeof(NetworkFitness));
+    if (!fittest) {
+        *num_fittest = 0;
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_fittest; i++) {
+        int best_index = -1;
+        double best_fitness = -1.0;
+
+        // Run a tournament
+        for (int j = 0; j < tournament_size; j++) {
+            int competitor_index = rand() % population_size;
+            if (population_with_fitness[competitor_index].fitness > best_fitness) {
+                best_fitness = population_with_fitness[competitor_index].fitness;
+                best_index = competitor_index;
+            }
+        }
+        fittest[i] = population_with_fitness[best_index];
+    }
+
+    return fittest;
+}
+
+// Wrapper function to select fittest based on strategy
+NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, SelectionType selection_type, int tournament_size) {
+    switch (selection_type) {
+        case ELITE:
+            return select_fittest_elitism(population_with_fitness, population_size, num_fittest);
+        case TOURNAMENT:
+            return select_fittest_tournament(population_with_fitness, population_size, num_fittest, tournament_size);
+        default:
+            // Default to elite selection
+            return select_fittest_elitism(population_with_fitness, population_size, num_fittest);
+    }
+}
+
+// Performs uniform crossover between two parent networks.
+// For each weight and bias, the child's value is randomly taken from one of the two parents.
 NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2) {
     if (!parent1 || !parent2 || parent1->num_layers != parent2->num_layers) {
         return NULL;
@@ -55,17 +95,25 @@ NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* pare
     NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture);
     if (!child) return NULL;
 
-    // Average the weights and biases
+    // Perform uniform crossover for weights and biases
     for (int i = 0; i < parent1->num_layers - 1; i++) {
         // Weights
         for (int r = 0; r < parent1->weights[i]->rows; r++) {
             for (int c = 0; c < parent1->weights[i]->cols; c++) {
-                child->weights[i]->data[r][c] = (parent1->weights[i]->data[r][c] + parent2->weights[i]->data[r][c]) / 2.0;
+                if ((double)rand() / RAND_MAX > 0.5) {
+                    child->weights[i]->data[r][c] = parent1->weights[i]->data[r][c];
+                } else {
+                    child->weights[i]->data[r][c] = parent2->weights[i]->data[r][c];
+                }
             }
         }
         // Biases
         for (int c = 0; c < parent1->biases[i]->cols; c++) {
-            child->biases[i]->data[0][c] = (parent1->biases[i]->data[0][c] + parent2->biases[i]->data[0][c]) / 2.0;
+            if ((double)rand() / RAND_MAX > 0.5) {
+                child->biases[i]->data[0][c] = parent1->biases[i]->data[0][c];
+            } else {
+                child->biases[i]->data[0][c] = parent2->biases[i]->data[0][c];
+            }
         }
     }
 

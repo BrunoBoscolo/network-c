@@ -27,6 +27,12 @@ typedef struct {
     Matrix** biases;    // Array of bias matrices (vectors)
     ActivationType activation_hidden; // Activation for hidden layers
     ActivationType activation_output; // Activation for output layer
+
+    // Optimizer state
+    Matrix** m_weights; // First moment for weights (Adam)
+    Matrix** v_weights; // Second moment for weights (Adam, RMSprop)
+    Matrix** m_biases;  // First moment for biases (Adam)
+    Matrix** v_biases;  // Second moment for biases (Adam, RMSprop)
 } NeuralNetwork;
 
 /**

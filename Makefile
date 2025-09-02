@@ -14,7 +14,7 @@ SHARED_LIB = lib$(LIB_NAME).so
 EXAMPLE_BINS = examples/training examples/recognizer examples/activations_comparison examples/backprop_training examples/comparison
 
 # --- Tests ---
-TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c
+TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 TEST_TARGET = test_runner
 

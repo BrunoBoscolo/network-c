@@ -86,7 +86,7 @@ void apply_activation_derivative(Matrix* m, ActivationType activation_type) {
 
 // Creates and allocates memory for a neural network
 NeuralNetwork* create_neural_network(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
-    if (num_layers < 2) return NULL; // A network must have at least an input and an output layer
+    if (num_layers < 2) return NULL;
 
     NeuralNetwork* net = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
     if (!net) return NULL;
@@ -95,50 +95,39 @@ NeuralNetwork* create_neural_network(int num_layers, const int* architecture, Ac
     net->activation_hidden = activation_hidden;
     net->activation_output = activation_output;
     net->architecture = (int*)malloc(num_layers * sizeof(int));
-    if (!net->architecture) {
-        free(net);
-        return NULL;
-    }
     for(int i=0; i<num_layers; i++) net->architecture[i] = architecture[i];
 
-    net->weights = (Matrix**)malloc((num_layers - 1) * sizeof(Matrix*));
-    if (!net->weights) {
-        free(net->architecture);
-        free(net);
+    // Allocate arrays for weights, biases, and optimizer state
+    int num_weight_sets = num_layers - 1;
+    net->weights = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+    net->biases = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+    net->m_weights = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+    net->v_weights = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+    net->m_biases = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+    net->v_biases = (Matrix**)malloc(num_weight_sets * sizeof(Matrix*));
+
+    // Basic null checks for the main pointers
+    if (!net->architecture || !net->weights || !net->biases || !net->m_weights || !net->v_weights || !net->m_biases || !net->v_biases) {
+        free_neural_network(net); // A simplified cleanup
         return NULL;
     }
 
-    net->biases = (Matrix**)malloc((num_layers - 1) * sizeof(Matrix*));
-    if (!net->biases) {
-        free(net->weights);
-        free(net->architecture);
-        free(net);
-        return NULL;
+    // Initialize all matrix pointers to NULL
+    for (int i = 0; i < num_weight_sets; i++) {
+        net->weights[i] = net->biases[i] = net->m_weights[i] = net->v_weights[i] = net->m_biases[i] = net->v_biases[i] = NULL;
     }
 
-    for (int i = 0; i < num_layers - 1; i++) {
+
+    for (int i = 0; i < num_weight_sets; i++) {
         net->weights[i] = create_matrix(architecture[i], architecture[i+1]);
-        if (!net->weights[i]) {
-            // Rollback
-            for (int j = 0; j < i; j++) free_matrix(net->weights[j]);
-            free(net->weights);
-            free(net->biases); // Biases for this layer were not allocated yet
-            free(net->architecture);
-            free(net);
-            return NULL;
-        }
         net->biases[i] = create_matrix(1, architecture[i+1]);
-        if (!net->biases[i]) {
-            // Rollback
-            free_matrix(net->weights[i]); // Free the weight matrix for the current layer
-            for (int j = 0; j < i; j++) {
-                free_matrix(net->weights[j]);
-                free_matrix(net->biases[j]);
-            }
-            free(net->weights);
-            free(net->biases);
-            free(net->architecture);
-            free(net);
+        net->m_weights[i] = create_matrix(architecture[i], architecture[i+1]);
+        net->v_weights[i] = create_matrix(architecture[i], architecture[i+1]);
+        net->m_biases[i] = create_matrix(1, architecture[i+1]);
+        net->v_biases[i] = create_matrix(1, architecture[i+1]);
+
+        if (!net->weights[i] || !net->biases[i] || !net->m_weights[i] || !net->v_weights[i] || !net->m_biases[i] || !net->v_biases[i]) {
+            free_neural_network(net); // Full cleanup
             return NULL;
         }
     }
@@ -162,12 +151,32 @@ void initialize_network(NeuralNetwork* net) {
 // Frees all memory associated with a neural network
 void free_neural_network(NeuralNetwork* net) {
     if (!net) return;
-    for (int i = 0; i < net->num_layers - 1; i++) {
-        free_matrix(net->weights[i]);
-        free_matrix(net->biases[i]);
+
+    if (net->weights) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->weights[i]);
+        free(net->weights);
     }
-    free(net->weights);
-    free(net->biases);
+    if (net->biases) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->biases[i]);
+        free(net->biases);
+    }
+    if (net->m_weights) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->m_weights[i]);
+        free(net->m_weights);
+    }
+    if (net->v_weights) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->v_weights[i]);
+        free(net->v_weights);
+    }
+    if (net->m_biases) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->m_biases[i]);
+        free(net->m_biases);
+    }
+    if (net->v_biases) {
+        for (int i = 0; i < net->num_layers - 1; i++) free_matrix(net->v_biases[i]);
+        free(net->v_biases);
+    }
+
     free(net->architecture);
     free(net);
 }

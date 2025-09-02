@@ -21,6 +21,9 @@ const char* test_two_point_crossover();
 // test_backpropagation.c
 const char* test_backprop_overfit_single_instance();
 
+// test_optimizers.c
+char* optimizers_test_suite();
+
 // Add declarations for other test suites here
 
 // A function to run all test suites

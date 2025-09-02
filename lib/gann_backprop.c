@@ -26,13 +26,7 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
     printf("  Epochs: %d\n", params->epochs);
     printf("  Batch Size: %d\n", params->batch_size);
 
-    backpropagate(
-        net,
-        train_dataset,
-        params->learning_rate,
-        params->epochs,
-        params->batch_size
-    );
+    backpropagate(net, train_dataset, params);
 
     printf("--- Backpropagation Training Finished ---\n");
 

@@ -22,11 +22,17 @@ int main() {
     GannBackpropParams params = {
         .architecture = ARCHITECTURE,
         .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
-        .learning_rate = 0.01,
-        .epochs = 10,
+        .learning_rate = 0.001, // ADAM works well with smaller learning rates
+        .epochs = 5,
         .batch_size = 32,
         .activation_hidden = RELU,
-        .activation_output = SIGMOID
+        .activation_output = SIGMOID,
+        // --- Optimizer Configuration ---
+        .optimizer_type = ADAM, // Choose between SGD, ADAM, RMSPROP
+        // ADAM & RMSprop parameters (ignored if optimizer_type is SGD)
+        .beta1 = 0.9,
+        .beta2 = 0.999,
+        .epsilon = 1e-8
     };
 
     printf("Network architecture: [");

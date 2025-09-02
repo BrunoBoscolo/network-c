@@ -6,13 +6,96 @@
 #include <string.h>
 
 
+#include "gann.h"
+#include <math.h>
+
+// --- Optimizer-specific Weight Update Functions ---
+
+void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
+    double lr_batch = params->learning_rate / batch_size;
+    for (int l = 0; l < net->num_layers - 1; l++) {
+        // Update weights
+        for(int r=0; r < net->weights[l]->rows; r++) {
+            for (int c=0; c < net->weights[l]->cols; c++) {
+                net->weights[l]->data[r][c] -= lr_batch * weight_gradients[l]->data[r][c];
+            }
+        }
+        // Update biases
+         for (int c=0; c < net->biases[l]->cols; c++) {
+            net->biases[l]->data[0][c] -= lr_batch * bias_gradients[l]->data[0][c];
+        }
+    }
+}
+
+void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
+    double lr = params->learning_rate;
+    double beta2 = params->beta2;
+    double epsilon = params->epsilon;
+
+    for (int l = 0; l < net->num_layers - 1; l++) {
+        // Update weights
+        for (int r = 0; r < net->weights[l]->rows; r++) {
+            for (int c = 0; c < net->weights[l]->cols; c++) {
+                double grad = weight_gradients[l]->data[r][c] / batch_size;
+                net->v_weights[l]->data[r][c] = beta2 * net->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
+                net->weights[l]->data[r][c] -= (lr / (sqrt(net->v_weights[l]->data[r][c]) + epsilon)) * grad;
+            }
+        }
+        // Update biases
+        for (int c = 0; c < net->biases[l]->cols; c++) {
+            double grad = bias_gradients[l]->data[0][c] / batch_size;
+            net->v_biases[l]->data[0][c] = beta2 * net->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
+            net->biases[l]->data[0][c] -= (lr / (sqrt(net->v_biases[l]->data[0][c]) + epsilon)) * grad;
+        }
+    }
+}
+
+void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t) {
+    double lr = params->learning_rate;
+    double beta1 = params->beta1;
+    double beta2 = params->beta2;
+    double epsilon = params->epsilon;
+
+    for (int l = 0; l < net->num_layers - 1; l++) {
+        // Update weights
+        for (int r = 0; r < net->weights[l]->rows; r++) {
+            for (int c = 0; c < net->weights[l]->cols; c++) {
+                double grad = weight_gradients[l]->data[r][c] / batch_size;
+                // Update moments
+                net->m_weights[l]->data[r][c] = beta1 * net->m_weights[l]->data[r][c] + (1 - beta1) * grad;
+                net->v_weights[l]->data[r][c] = beta2 * net->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
+                // Bias correction
+                double m_hat = net->m_weights[l]->data[r][c] / (1 - pow(beta1, t));
+                double v_hat = net->v_weights[l]->data[r][c] / (1 - pow(beta2, t));
+                // Update weights
+                net->weights[l]->data[r][c] -= (lr * m_hat) / (sqrt(v_hat) + epsilon);
+            }
+        }
+        // Update biases
+        for (int c = 0; c < net->biases[l]->cols; c++) {
+            double grad = bias_gradients[l]->data[0][c] / batch_size;
+            // Update moments
+            net->m_biases[l]->data[0][c] = beta1 * net->m_biases[l]->data[0][c] + (1 - beta1) * grad;
+            net->v_biases[l]->data[0][c] = beta2 * net->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
+            // Bias correction
+            double m_hat = net->m_biases[l]->data[0][c] / (1 - pow(beta1, t));
+            double v_hat = net->v_biases[l]->data[0][c] / (1 - pow(beta2, t));
+            // Update biases
+            net->biases[l]->data[0][c] -= (lr * m_hat) / (sqrt(v_hat) + epsilon);
+        }
+    }
+}
+
+
 // Main function to train the network using backpropagation
-void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, double learning_rate, int epochs, int batch_size) {
-    for (int epoch = 0; epoch < epochs; epoch++) {
+void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params) {
+    int t = 0; // Timestep for Adam
+    for (int epoch = 0; epoch < params->epochs; epoch++) {
         // Here we would shuffle the dataset for better training, but for simplicity, we'll iterate sequentially.
 
-        for (int i = 0; i < train_dataset->num_items; i += batch_size) {
-            int current_batch_size = (i + batch_size > train_dataset->num_items) ? (train_dataset->num_items - i) : batch_size;
+        for (int i = 0; i < train_dataset->num_items; i += params->batch_size) {
+            t++;
+            int current_batch_size = (i + params->batch_size > train_dataset->num_items) ? (train_dataset->num_items - i) : params->batch_size;
 
             // --- 1. Initialize Gradient Accumulators ---
             Matrix** weight_gradients = malloc((net->num_layers - 1) * sizeof(Matrix*));
@@ -107,18 +190,17 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, double lear
             }
 
             // --- 3. Update Weights and Biases ---
-            double lr_batch = learning_rate / current_batch_size;
-            for (int l = 0; l < net->num_layers - 1; l++) {
-                // Update weights
-                for(int r=0; r < net->weights[l]->rows; r++) {
-                    for (int c=0; c < net->weights[l]->cols; c++) {
-                        net->weights[l]->data[r][c] -= lr_batch * weight_gradients[l]->data[r][c];
-                    }
-                }
-                // Update biases
-                 for (int c=0; c < net->biases[l]->cols; c++) {
-                    net->biases[l]->data[0][c] -= lr_batch * bias_gradients[l]->data[0][c];
-                }
+            switch (params->optimizer_type) {
+                case ADAM:
+                    update_weights_adam(net, weight_gradients, bias_gradients, params, current_batch_size, t);
+                    break;
+                case RMSPROP:
+                    update_weights_rmsprop(net, weight_gradients, bias_gradients, params, current_batch_size);
+                    break;
+                case SGD:
+                default:
+                    update_weights_sgd(net, weight_gradients, bias_gradients, params, current_batch_size);
+                    break;
             }
 
             // --- 4. Free Gradient Accumulators ---
@@ -129,6 +211,6 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, double lear
             free(weight_gradients);
             free(bias_gradients);
         }
-        printf("Epoch %d/%d completed.\n", epoch + 1, epochs);
+        printf("Epoch %d/%d completed.\n", epoch + 1, params->epochs);
     }
 }

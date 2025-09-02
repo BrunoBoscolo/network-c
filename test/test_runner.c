@@ -25,6 +25,9 @@ const char* all_suites() {
     // Run tests from test_backpropagation.c
     mu_run_test(test_backprop_overfit_single_instance);
 
+    // Run tests from test_optimizers.c
+    mu_run_test(optimizers_test_suite);
+
     return NULL;
 }
 

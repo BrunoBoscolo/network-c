@@ -2,15 +2,16 @@
 #define NEURAL_NETWORK_H
 
 #include <stdlib.h>
+#include "matrix.h"
 
 // --- Struct Definitions ---
 
-// Represents a 2D matrix
-typedef struct {
-    int rows;
-    int cols;
-    double** data;
-} Matrix;
+// Enum for activation functions
+typedef enum {
+    SIGMOID,
+    RELU,
+    LEAKY_RELU
+} ActivationType;
 
 // Represents a feedforward neural network
 typedef struct {
@@ -18,27 +19,86 @@ typedef struct {
     int* architecture; // Array of layer sizes, e.g., [3, 5, 2]
     Matrix** weights;   // Array of weight matrices
     Matrix** biases;    // Array of bias matrices (vectors)
+    ActivationType activation_hidden; // Activation for hidden layers
+    ActivationType activation_output; // Activation for output layer
 } NeuralNetwork;
 
-// --- Matrix Operations ---
+/**
+ * @brief Applies an activation function element-wise to a matrix.
+ * @param m The matrix to modify.
+ * @param activation_type The type of activation function to apply.
+ */
+void apply_activation(Matrix* m, ActivationType activation_type);
 
-Matrix* create_matrix(int rows, int cols);
-void free_matrix(Matrix* m);
-void print_matrix(const Matrix* m);
-Matrix* dot_product(const Matrix* m1, const Matrix* m2);
-void add_bias(Matrix* m, const Matrix* bias);
-void apply_sigmoid(Matrix* m);
+/**
+ * @brief Applies the derivative of an activation function element-wise to a matrix.
+ * This is used during backpropagation.
+ * @param m The matrix to which the derivative will be applied.
+ * @param activation_type The type of activation function derivative to apply.
+ */
+void apply_activation_derivative(Matrix* m, ActivationType activation_type);
+
 
 // --- Neural Network Operations ---
 
-NeuralNetwork* create_neural_network(int num_layers, const int* architecture);
+/**
+ * @brief Creates a new neural network.
+ * @param num_layers The number of layers.
+ * @param architecture An array of integers specifying the number of neurons in each layer.
+ * @param activation_hidden The activation function for the hidden layers.
+ * @param activation_output The activation function for the output layer.
+ * @return A pointer to the newly created NeuralNetwork.
+ */
+NeuralNetwork* create_neural_network(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
+
+/**
+ * @brief Frees the memory allocated for a neural network.
+ * @param net The neural network to free.
+ */
 void free_neural_network(NeuralNetwork* net);
+
+/**
+ * @brief Initializes the weights and biases of a neural network with random values.
+ * @param net The neural network to initialize.
+ */
 void initialize_network(NeuralNetwork* net);
+
+/**
+ * @brief Performs a forward pass through the network.
+ * @param net The neural network.
+ * @param input The input matrix.
+ * @return A new matrix containing the output of the network.
+ */
 Matrix* forward_pass(const NeuralNetwork* net, const Matrix* input);
+
+/**
+ * @brief Mutates the weights and biases of a neural network.
+ * @param net The neural network to mutate.
+ * @param mutation_rate The magnitude of the mutation.
+ * @param mutation_chance The chance of a mutation occurring.
+ */
 void mutate_network(NeuralNetwork* net, float mutation_rate, float mutation_chance);
+
+/**
+ * @brief Creates a deep copy of a neural network.
+ * @param src_net The source network to clone.
+ * @return A pointer to the newly cloned NeuralNetwork.
+ */
 NeuralNetwork* clone_network(const NeuralNetwork* src_net);
 
+/**
+ * @brief Saves a neural network to a file.
+ * @param net The neural network to save.
+ * @param filepath The path to the file.
+ * @return 1 on success, 0 on failure.
+ */
 int save_network(const NeuralNetwork* net, const char* filepath);
+
+/**
+ * @brief Loads a neural network from a file.
+ * @param filepath The path to the file.
+ * @return A pointer to the loaded NeuralNetwork.
+ */
 NeuralNetwork* load_network(const char* filepath);
 
 #endif // NEURAL_NETWORK_H

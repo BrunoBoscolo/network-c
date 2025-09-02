@@ -19,6 +19,9 @@ const char* all_suites() {
     // Run tests from test_evolution.c
     mu_run_test(test_crossover);
 
+    // Run tests from test_backpropagation.c
+    mu_run_test(test_backprop_overfit_single_instance);
+
     return NULL;
 }
 

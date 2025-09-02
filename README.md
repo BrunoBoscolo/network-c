@@ -7,13 +7,15 @@ This project is a C implementation of a simple feedforward neural network that i
 - **Genetic Algorithm**: The network is trained using a genetic algorithm, where a population of networks "evolves" to become better at recognizing digits.
 - **Crossover**: The genetic algorithm now uses crossover to create new networks from the fittest parents.
 - **MNIST Dataset**: The project is pre-configured to work with the MNIST dataset of handwritten digits.
-- **Modular Architecture**: The code is organized into separate modules for the neural network, the genetic algorithm, and data loading.
+- **Configurable Activation Functions**: Supports Sigmoid, ReLU, and Leaky ReLU for hidden layers.
+- **Modular Architecture**: The code is organized into separate modules for the neural network, genetic algorithm, data loading, and matrix operations.
 - **Build and Test with Make**: A `Makefile` is provided for easy building and testing of the project.
 - **Network Persistence**: The trained network can be saved to a file and loaded later for evaluation.
 
 ## Architecture
-The project is divided into three main components:
-- `neural_network`: Contains the core logic for the neural network, including matrix operations, network creation, forward propagation, mutation, and persistence.
+The project is divided into four main components:
+- `matrix`: A general-purpose matrix library for creating and manipulating 2D matrices.
+- `neural_network`: Contains the core logic for the neural network, including network creation, forward propagation, mutation, and persistence.
 - `evolution`: Implements the genetic algorithm, including population creation, fitness evaluation, selection, crossover, and reproduction.
 - `data_loader`: Handles loading the MNIST dataset from files into a format that can be used by the neural network.
 
@@ -55,6 +57,13 @@ The project uses a `Makefile` for building.
     ```bash
     ./recognizer my_network.dat
     ```
+
+3.  **Compare Activation Functions**:
+    A separate example is provided to compare the performance of the different activation functions.
+    ```bash
+    ./examples/activations_comparison
+    ```
+    This will train a network for each activation function (Sigmoid, ReLU, Leaky ReLU) and print the final accuracy of each.
 
 ### Running the Tests
 The project includes a test suite to verify the correctness of the core components. To run the tests, use the following command:

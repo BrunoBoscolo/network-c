@@ -1,5 +1,5 @@
 #include "minunit.h"
-#include "../include/neural_network.h"
+#include "neural_network.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -7,7 +7,7 @@ extern const double TEST_EPSILON;
 
 const char* test_save_and_load_network() {
     int architecture[] = {2, 3, 1};
-    NeuralNetwork* original_net = create_neural_network(3, architecture);
+    NeuralNetwork* original_net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
 
     // Set some specific values to test
     original_net->weights[0]->data[0][0] = 0.123;

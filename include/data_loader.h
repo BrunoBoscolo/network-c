@@ -19,13 +19,25 @@ typedef struct {
 
 // --- Data Loader Functions ---
 
-// Loads the MNIST dataset from the specified files
+/**
+ * @brief Loads the MNIST dataset from the specified IDX-formatted files.
+ * @param image_path The file path to the MNIST image data.
+ * @param label_path The file path to the MNIST label data.
+ * @return A pointer to the loaded Dataset, or NULL on failure.
+ */
 Dataset* load_mnist_dataset(const char* image_path, const char* label_path);
 
-// Creates a dummy dataset with random values
+/**
+ * @brief Creates a dummy dataset with random values for testing purposes.
+ * @param num_items The number of items (images and labels) to create in the dataset.
+ * @return A pointer to the created Dataset.
+ */
 Dataset* create_dummy_dataset(int num_items);
 
-// Frees the memory allocated for a dataset
+/**
+ * @brief Frees the memory allocated for a dataset.
+ * @param dataset The dataset to free.
+ */
 void free_dataset(Dataset* dataset);
 
 #endif // DATA_LOADER_H

@@ -26,13 +26,13 @@ Dataset* load_mnist_dataset(const char* image_path, const char* label_path) {
 
     // --- Read Image File Header ---
     int magic, num_images, rows, cols;
-    fread(&magic, sizeof(int), 1, image_file);
+    if (fread(&magic, sizeof(int), 1, image_file) != 1) { fprintf(stderr, "Error reading magic number from image file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     magic = swap_endian(magic);
-    fread(&num_images, sizeof(int), 1, image_file);
+    if (fread(&num_images, sizeof(int), 1, image_file) != 1) { fprintf(stderr, "Error reading number of images from image file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     num_images = swap_endian(num_images);
-    fread(&rows, sizeof(int), 1, image_file);
+    if (fread(&rows, sizeof(int), 1, image_file) != 1) { fprintf(stderr, "Error reading number of rows from image file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     rows = swap_endian(rows);
-    fread(&cols, sizeof(int), 1, image_file);
+    if (fread(&cols, sizeof(int), 1, image_file) != 1) { fprintf(stderr, "Error reading number of columns from image file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     cols = swap_endian(cols);
 
     if (magic != 2051) {
@@ -44,9 +44,9 @@ Dataset* load_mnist_dataset(const char* image_path, const char* label_path) {
 
     // --- Read Label File Header ---
     int label_magic, num_labels;
-    fread(&label_magic, sizeof(int), 1, label_file);
+    if (fread(&label_magic, sizeof(int), 1, label_file) != 1) { fprintf(stderr, "Error reading magic number from label file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     label_magic = swap_endian(label_magic);
-    fread(&num_labels, sizeof(int), 1, label_file);
+    if (fread(&num_labels, sizeof(int), 1, label_file) != 1) { fprintf(stderr, "Error reading number of labels from label file.\n"); fclose(image_file); fclose(label_file); return NULL; }
     num_labels = swap_endian(num_labels);
 
     if (label_magic != 2049) {
@@ -88,13 +88,27 @@ Dataset* load_mnist_dataset(const char* image_path, const char* label_path) {
 
     for (int i = 0; i < num_images; i++) {
         // Read image
-        fread(image_buffer, sizeof(unsigned char), image_size, image_file);
+        if (fread(image_buffer, sizeof(unsigned char), image_size, image_file) != image_size) {
+            fprintf(stderr, "Error reading image data for item %d.\n", i);
+            free(image_buffer);
+            free_dataset(dataset);
+            fclose(image_file);
+            fclose(label_file);
+            return NULL;
+        }
         for (int j = 0; j < image_size; j++) {
             dataset->images->data[i][j] = (double)image_buffer[j] / 255.0;
         }
 
         // Read label and one-hot encode
-        fread(&label_buffer, sizeof(unsigned char), 1, label_file);
+        if (fread(&label_buffer, sizeof(unsigned char), 1, label_file) != 1) {
+            fprintf(stderr, "Error reading label data for item %d.\n", i);
+            free(image_buffer);
+            free_dataset(dataset);
+            fclose(image_file);
+            fclose(label_file);
+            return NULL;
+        }
         for(int k=0; k < MNIST_NUM_CLASSES; k++) {
             dataset->labels->data[i][k] = 0.0;
         }

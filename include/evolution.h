@@ -9,6 +9,13 @@ typedef enum {
     TOURNAMENT
 } SelectionType;
 
+// Enum for crossover strategies
+typedef enum {
+    UNIFORM,
+    SINGLE_POINT,
+    TWO_POINT
+} CrossoverType;
+
 // A struct to hold a network and its fitness score
 typedef struct {
     NeuralNetwork* network;
@@ -21,9 +28,10 @@ typedef struct {
  * @brief Performs crossover between two parent networks to create a child.
  * @param parent1 The first parent network.
  * @param parent2 The second parent network.
+ * @param crossover_type The crossover strategy to use.
  * @return A new network created by combining the parents' genes.
  */
-NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2);
+NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type);
 
 /**
  * @brief Creates the initial population of random neural networks.
@@ -52,10 +60,9 @@ NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int popu
  * @param fittest_networks An array of the fittest networks from the previous generation.
  * @param num_fittest The number of fittest networks.
  * @param new_population_size The size of the new population to create.
- * @param mutation_rate The mutation rate.
- * @param mutation_chance The mutation chance.
+ * @param crossover_type The crossover strategy to use.
  * @return An array of pointers to the new generation of networks.
  */
-NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, float mutation_rate, float mutation_chance);
+NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type);
 
 #endif // EVOLUTION_H

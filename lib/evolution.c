@@ -90,7 +90,7 @@ NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int popu
 
 // Performs uniform crossover between two parent networks.
 // For each weight and bias, the child's value is randomly taken from one of the two parents.
-NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2) {
+NeuralNetwork* uniform_crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2) {
     if (!parent1 || !parent2 || parent1->num_layers != parent2->num_layers) {
         return NULL;
     }
@@ -124,8 +124,116 @@ NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* pare
     return child;
 }
 
-// Creates a new generation using crossover and mutation
-NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, float mutation_rate, float mutation_chance) {
+// Performs single-point crossover between two parent networks.
+NeuralNetwork* single_point_crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2) {
+    if (!parent1 || !parent2 || parent1->num_layers != parent2->num_layers) {
+        return NULL;
+    }
+
+    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    if (!child) return NULL;
+
+    int total_weights = 0;
+    for (int i = 0; i < parent1->num_layers - 1; i++) {
+        total_weights += parent1->weights[i]->rows * parent1->weights[i]->cols;
+        total_weights += parent1->biases[i]->cols;
+    }
+
+    int crossover_point = rand() % total_weights;
+    int current_weight = 0;
+
+    for (int i = 0; i < parent1->num_layers - 1; i++) {
+        // Weights
+        for (int r = 0; r < parent1->weights[i]->rows; r++) {
+            for (int c = 0; c < parent1->weights[i]->cols; c++) {
+                if (current_weight < crossover_point) {
+                    child->weights[i]->data[r][c] = parent1->weights[i]->data[r][c];
+                } else {
+                    child->weights[i]->data[r][c] = parent2->weights[i]->data[r][c];
+                }
+                current_weight++;
+            }
+        }
+        // Biases
+        for (int c = 0; c < parent1->biases[i]->cols; c++) {
+            if (current_weight < crossover_point) {
+                child->biases[i]->data[0][c] = parent1->biases[i]->data[0][c];
+            } else {
+                child->biases[i]->data[0][c] = parent2->biases[i]->data[0][c];
+            }
+            current_weight++;
+        }
+    }
+
+    return child;
+}
+
+// Performs two-point crossover between two parent networks.
+NeuralNetwork* two_point_crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2) {
+    if (!parent1 || !parent2 || parent1->num_layers != parent2->num_layers) {
+        return NULL;
+    }
+
+    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    if (!child) return NULL;
+
+    int total_weights = 0;
+    for (int i = 0; i < parent1->num_layers - 1; i++) {
+        total_weights += parent1->weights[i]->rows * parent1->weights[i]->cols;
+        total_weights += parent1->biases[i]->cols;
+    }
+
+    int crossover_point1 = rand() % total_weights;
+    int crossover_point2 = rand() % total_weights;
+    if (crossover_point1 > crossover_point2) {
+        int temp = crossover_point1;
+        crossover_point1 = crossover_point2;
+        crossover_point2 = temp;
+    }
+
+    int current_weight = 0;
+
+    for (int i = 0; i < parent1->num_layers - 1; i++) {
+        // Weights
+        for (int r = 0; r < parent1->weights[i]->rows; r++) {
+            for (int c = 0; c < parent1->weights[i]->cols; c++) {
+                if (current_weight >= crossover_point1 && current_weight < crossover_point2) {
+                    child->weights[i]->data[r][c] = parent2->weights[i]->data[r][c];
+                } else {
+                    child->weights[i]->data[r][c] = parent1->weights[i]->data[r][c];
+                }
+                current_weight++;
+            }
+        }
+        // Biases
+        for (int c = 0; c < parent1->biases[i]->cols; c++) {
+            if (current_weight >= crossover_point1 && current_weight < crossover_point2) {
+                child->biases[i]->data[0][c] = parent2->biases[i]->data[0][c];
+            } else {
+                child->biases[i]->data[0][c] = parent1->biases[i]->data[0][c];
+            }
+            current_weight++;
+        }
+    }
+
+    return child;
+}
+
+NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type) {
+    switch (crossover_type) {
+        case UNIFORM:
+            return uniform_crossover(parent1, parent2);
+        case SINGLE_POINT:
+            return single_point_crossover(parent1, parent2);
+        case TWO_POINT:
+            return two_point_crossover(parent1, parent2);
+        default:
+            return uniform_crossover(parent1, parent2);
+    }
+}
+
+// Creates a new generation using crossover
+NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type) {
     if (num_fittest == 0) return NULL;
 
     NeuralNetwork** new_population = (NeuralNetwork**)malloc(new_population_size * sizeof(NeuralNetwork*));
@@ -139,14 +247,11 @@ NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittes
         const NeuralNetwork* parent2 = fittest_networks[parent2_index].network;
 
         // Create a child using crossover
-        NeuralNetwork* child = crossover(parent1, parent2);
+        NeuralNetwork* child = crossover(parent1, parent2, crossover_type);
         if (!child) {
             // Handle crossover failure, e.g., by cloning one parent
             child = clone_network(parent1);
         }
-
-        // Mutate the child
-        mutate_network(child, mutation_rate, mutation_chance);
 
         new_population[i] = child;
     }

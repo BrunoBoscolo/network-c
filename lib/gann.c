@@ -103,7 +103,12 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
         int num_fittest;
         NetworkFitness* fittest_networks_info = select_fittest(population_with_fitness, params->population_size, &num_fittest, params->selection_type, params->tournament_size);
 
-        NeuralNetwork** new_population = reproduce(fittest_networks_info, num_fittest, params->population_size, params->mutation_rate, params->mutation_chance);
+        NeuralNetwork** new_population = reproduce(fittest_networks_info, num_fittest, params->population_size, params->crossover_type);
+
+        // Mutate the new population
+        for (int i = 0; i < params->population_size; i++) {
+            mutate_network(new_population[i], params->mutation_rate, params->mutation_chance, params->mutation_type, params->mutation_std_dev);
+        }
 
         // Free old population (but not the networks themselves, as they are pointed to by fittest_networks_info)
         free(population);

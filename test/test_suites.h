@@ -8,12 +8,15 @@ const char* test_matrix_dot_product();
 // test_neural_network.c
 const char* test_nn_creation();
 const char* test_nn_forward_pass();
+const char* test_gaussian_mutation();
 
 // test_persistence.c
 const char* test_save_and_load_network();
 
 // test_evolution.c
 const char* test_crossover();
+const char* test_single_point_crossover();
+const char* test_two_point_crossover();
 
 // test_backpropagation.c
 const char* test_backprop_overfit_single_instance();

@@ -82,3 +82,35 @@ const char* test_nn_forward_pass() {
 
     return NULL;
 }
+
+const char* test_gaussian_mutation() {
+    int architecture[] = {2, 2, 1};
+    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    initialize_network(net);
+
+    NeuralNetwork* net_clone = clone_network(net);
+
+    srand(42);
+    mutate_network(net, 0.1f, 1.0f, GAUSSIAN, 0.2); // 100% chance of mutation
+
+    int changed = 0;
+    for (int i = 0; i < net->num_layers - 1; i++) {
+        for (int r = 0; r < net->weights[i]->rows; r++) {
+            for (int c = 0; c < net->weights[i]->cols; c++) {
+                if (fabs(net->weights[i]->data[r][c] - net_clone->weights[i]->data[r][c]) > TEST_EPSILON) {
+                    changed = 1;
+                    break;
+                }
+            }
+            if(changed) break;
+        }
+        if(changed) break;
+    }
+
+    mu_assert("Gaussian mutation did not change network weights", changed);
+
+    free_neural_network(net);
+    free_neural_network(net_clone);
+
+    return NULL;
+}

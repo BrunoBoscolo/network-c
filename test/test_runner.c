@@ -12,12 +12,15 @@ const char* all_suites() {
     // Run tests from test_neural_network.c
     mu_run_test(test_nn_creation);
     mu_run_test(test_nn_forward_pass);
+    mu_run_test(test_gaussian_mutation);
 
     // Run tests from test_persistence.c
     mu_run_test(test_save_and_load_network);
 
     // Run tests from test_evolution.c
     mu_run_test(test_crossover);
+    mu_run_test(test_single_point_crossover);
+    mu_run_test(test_two_point_crossover);
 
     // Run tests from test_backpropagation.c
     mu_run_test(test_backprop_overfit_single_instance);

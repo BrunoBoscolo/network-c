@@ -29,7 +29,10 @@ int main() {
         .fitness_samples = 1000,
         .selection_type = TOURNAMENT,
         .tournament_size = 4,
-        .activation_hidden = LEAKY_RELU
+        .activation_hidden = LEAKY_RELU,
+        .crossover_type = TWO_POINT,
+        .mutation_type = GAUSSIAN,
+        .mutation_std_dev = 0.2
     };
 
     printf("Network architecture: [");

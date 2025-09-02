@@ -13,6 +13,12 @@ typedef enum {
     LEAKY_RELU
 } ActivationType;
 
+// Enum for mutation types
+typedef enum {
+    RANDOM_UNIFORM,
+    GAUSSIAN
+} MutationType;
+
 // Represents a feedforward neural network
 typedef struct {
     int num_layers;
@@ -76,8 +82,10 @@ Matrix* forward_pass(const NeuralNetwork* net, const Matrix* input);
  * @param net The neural network to mutate.
  * @param mutation_rate The magnitude of the mutation.
  * @param mutation_chance The chance of a mutation occurring.
+ * @param mutation_type The type of mutation to apply.
+ * @param mutation_std_dev The standard deviation for Gaussian mutation.
  */
-void mutate_network(NeuralNetwork* net, float mutation_rate, float mutation_chance);
+void mutate_network(NeuralNetwork* net, float mutation_rate, float mutation_chance, MutationType mutation_type, double mutation_std_dev);
 
 /**
  * @brief Creates a deep copy of a neural network.

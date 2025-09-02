@@ -25,7 +25,7 @@ const char* test_backprop_overfit_single_instance() {
     // 3. Create and train the network
     NeuralNetwork* net = create_neural_network(params.num_layers, params.architecture, params.activation_hidden, params.activation_output);
     initialize_network(net);
-    backpropagate(net, dummy_dataset, params.learning_rate, params.epochs, params.batch_size);
+    backpropagate(net, dummy_dataset, &params);
 
     // 4. Test the prediction
     int prediction = gann_predict(net, dummy_dataset->images->data[0]);

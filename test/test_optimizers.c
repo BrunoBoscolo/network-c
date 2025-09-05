@@ -16,7 +16,7 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
 
 // --- Test Cases ---
 
-char* test_rmsprop_update() {
+const char* test_rmsprop_update() {
     // 1. Setup
     const int architecture[] = {2, 2};
     NeuralNetwork* net = create_neural_network(2, architecture, RELU, SIGMOID);
@@ -62,7 +62,7 @@ char* test_rmsprop_update() {
 }
 
 
-char* test_adam_update() {
+const char* test_adam_update() {
     // 1. Setup
     const int architecture[] = {1, 1};
     NeuralNetwork* net = create_neural_network(2, architecture, RELU, SIGMOID);
@@ -108,7 +108,7 @@ char* test_adam_update() {
 
 // --- Test Suite ---
 
-char* optimizers_test_suite() {
+const char* optimizers_test_suite() {
     mu_run_test(test_rmsprop_update);
     mu_run_test(test_adam_update);
     return 0;

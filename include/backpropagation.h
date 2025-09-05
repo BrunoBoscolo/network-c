@@ -40,5 +40,9 @@ typedef struct {
  */
 void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params);
 
+// --- Optimizer-specific Weight Update Functions (exposed for testing) ---
+void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size);
+void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t);
+
 
 #endif // BACKPROPAGATION_H

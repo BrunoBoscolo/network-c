@@ -22,7 +22,7 @@ const char* test_two_point_crossover();
 const char* test_backprop_overfit_single_instance();
 
 // test_optimizers.c
-char* optimizers_test_suite();
+const char* optimizers_test_suite();
 
 // Add declarations for other test suites here
 

@@ -1,5 +1,6 @@
 #include "minunit.h"
 #include "neural_network.h"
+#include "mutation.h"
 #include <math.h>
 
 extern const double TEST_EPSILON;
@@ -91,7 +92,7 @@ const char* test_gaussian_mutation() {
     NeuralNetwork* net_clone = clone_network(net);
 
     srand(42);
-    mutate_network(net, 0.1f, 1.0f, GAUSSIAN, 0.2); // 100% chance of mutation
+    mutate_network(net, 0.1f, 1.0f, GAUSSIAN_MUTATION, 0.2, 0, 0, 0); // 100% chance of mutation
 
     int changed = 0;
     for (int i = 0; i < net->num_layers - 1; i++) {

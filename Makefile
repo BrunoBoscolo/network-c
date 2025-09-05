@@ -39,34 +39,34 @@ $(SHARED_LIB): $(LIB_OBJS)
 
 # Rules for building examples
 examples/training: examples/training.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/recognizer: examples/recognizer.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/activations_comparison: examples/activations_comparison.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/backprop_training: examples/backprop_training.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/comparison: examples/comparison.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_tournament_selection: examples/ex_tournament_selection.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_uniform_crossover: examples/ex_uniform_crossover.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_arithmetic_crossover: examples/ex_arithmetic_crossover.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_non_uniform_mutation: examples/ex_non_uniform_mutation.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_adaptive_mutation: examples/ex_adaptive_mutation.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 # Rule to compile library source files into object files
 lib/%.o: lib/%.c
@@ -78,10 +78,10 @@ test/%.o: test/%.c
 
 # Test rule
 test: $(TEST_TARGET)
-	LD_LIBRARY_PATH=. ./$(TEST_TARGET)
+	./$(TEST_TARGET)
 
 $(TEST_TARGET): $(TEST_OBJS) $(STATIC_LIB)
-	$(CC) $(CFLAGS) $(TEST_OBJS) -o $@ -L. -l$(LIB_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(TEST_OBJS) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 # Clean rule
 clean:

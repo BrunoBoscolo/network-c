@@ -1,5 +1,13 @@
 # Build artifacts
 *.o
-main
-recognizer
+*.a
+*.so
+
+# Executables
 test_runner
+examples/*
+!examples/*.c
+!examples/*.h
+
+# Other generated files
+trained_network.dat

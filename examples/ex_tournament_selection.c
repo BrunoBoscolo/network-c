@@ -45,12 +45,12 @@ int main() {
     // --- 4. Save the Best Network ---
     if (best_net) {
         printf("--------------------\n");
-        if (save_network(best_net, "ex_tournament_selection.dat")) {
+        if (nn_save(best_net, "ex_tournament_selection.dat")) {
             printf("Best network saved to ex_tournament_selection.dat\n");
         } else {
             fprintf(stderr, "Failed to save the best network.\n");
         }
-        free_neural_network(best_net);
+        nn_free(best_net);
     } else {
         fprintf(stderr, "Training failed to produce a network.\n");
     }

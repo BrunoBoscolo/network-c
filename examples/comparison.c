@@ -59,7 +59,7 @@ int main() {
         double ga_accuracy = gann_evaluate(ga_net, test_dataset);
         printf("GA Final Accuracy: %.2f%%\n", ga_accuracy * 100);
         print_time_elapsed(ga_start, ga_end);
-        free_neural_network(ga_net);
+        nn_free(ga_net);
     } else {
         fprintf(stderr, "GA Training failed.\n");
     }
@@ -86,7 +86,7 @@ int main() {
         double bp_accuracy = gann_evaluate(bp_net, test_dataset);
         printf("Backprop Final Accuracy: %.2f%%\n", bp_accuracy * 100);
         print_time_elapsed(bp_start, bp_end);
-        free_neural_network(bp_net);
+        nn_free(bp_net);
     } else {
         fprintf(stderr, "Backprop Training failed.\n");
     }

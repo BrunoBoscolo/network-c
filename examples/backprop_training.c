@@ -46,12 +46,12 @@ int main() {
     // --- 4. Save the Network ---
     if (net) {
         printf("--------------------\n");
-        if (save_network(net, "trained_network_backprop.dat")) {
+        if (nn_save(net, "trained_network_backprop.dat")) {
             printf("Trained network saved to trained_network_backprop.dat\n");
         } else {
             fprintf(stderr, "Failed to save the network.\n");
         }
-        free_neural_network(net);
+        nn_free(net);
     } else {
         fprintf(stderr, "Training failed to produce a network.\n");
     }

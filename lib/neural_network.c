@@ -186,10 +186,16 @@ int nn_save(const NeuralNetwork* net, const char* filepath) {
 
     // Write weights and biases
     for (int i = 0; i < net->num_layers - 1; i++) {
-        // Weights
-        if (fwrite(net->weights[i]->data[0], sizeof(double), net->weights[i]->rows * net->weights[i]->cols, file) != net->weights[i]->rows * net->weights[i]->cols) { fclose(file); return 0; }
-        // Biases
-        if (fwrite(net->biases[i]->data[0], sizeof(double), net->biases[i]->cols, file) != net->biases[i]->cols) { fclose(file); return 0; }
+        for (int j = 0; j < net->weights[i]->rows; j++) {
+            if (fwrite(net->weights[i]->data[j], sizeof(double), net->weights[i]->cols, file) != net->weights[i]->cols) {
+                fclose(file);
+                return 0;
+            }
+        }
+        if (fwrite(net->biases[i]->data[0], sizeof(double), net->biases[i]->cols, file) != net->biases[i]->cols) {
+            fclose(file);
+            return 0;
+        }
     }
 
     fclose(file);
@@ -227,8 +233,18 @@ NeuralNetwork* nn_load(const char* filepath) {
 
     // Read weights and biases
     for (int i = 0; i < net->num_layers - 1; i++) {
-        if (fread(net->weights[i]->data[0], sizeof(double), net->weights[i]->rows * net->weights[i]->cols, file) != net->weights[i]->rows * net->weights[i]->cols) { nn_free(net); fclose(file); return NULL; }
-        if (fread(net->biases[i]->data[0], sizeof(double), net->biases[i]->cols, file) != net->biases[i]->cols) { nn_free(net); fclose(file); return NULL; }
+        for (int j = 0; j < net->weights[i]->rows; j++) {
+            if (fread(net->weights[i]->data[j], sizeof(double), net->weights[i]->cols, file) != net->weights[i]->cols) {
+                nn_free(net);
+                fclose(file);
+                return NULL;
+            }
+        }
+        if (fread(net->biases[i]->data[0], sizeof(double), net->biases[i]->cols, file) != net->biases[i]->cols) {
+            nn_free(net);
+            fclose(file);
+            return NULL;
+        }
     }
 
     fclose(file);

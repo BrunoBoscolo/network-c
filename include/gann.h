@@ -11,6 +11,10 @@
 #include "evolution.h"
 #include "neural_network.h"
 #include "backpropagation.h"
+#include "selection.h"
+#include "crossover.h"
+#include "mutation.h"
+#include <stdbool.h>
 
 
 // --- High-Level "Easy" API ---
@@ -35,7 +39,38 @@ typedef struct {
     CrossoverType crossover_type;   /**< The crossover strategy to use. */
     MutationType mutation_type;     /**< The mutation strategy to use. */
     double mutation_std_dev;        /**< The standard deviation for Gaussian mutation. */
+    bool logging;                   /**< Whether to print logging information during training. */
 } GannTrainParams;
+
+
+// --- Function Pointer Typedefs for Extensibility ---
+typedef NetworkFitness* (*SelectionFunction)(NetworkFitness*, int, int*, SelectionType, int);
+typedef NeuralNetwork* (*CrossoverFunction)(const NeuralNetwork*, const NeuralNetwork*, CrossoverType);
+typedef void (*MutationFunction)(NeuralNetwork*, float, float, MutationType, double, int, int, double);
+
+
+/**
+ * @brief A struct for the new `gann_evolve` function, which allows for custom genetic operators.
+ */
+typedef struct {
+    GannTrainParams base_params;
+    SelectionFunction selection_func;
+    CrossoverFunction crossover_func;
+    MutationFunction mutation_func;
+} GannEvolveParams;
+
+
+/**
+ * @brief Evolves a population of neural networks using the given genetic operators.
+ *
+ * This is a more flexible version of `gann_train` that allows for custom genetic operators.
+ *
+ * @param params The evolution parameters, including function pointers to the genetic operators.
+ * @param train_dataset The dataset to train on.
+ * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
+ */
+NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset);
+
 
 /**
  * @brief Trains a new neural network using a genetic algorithm.

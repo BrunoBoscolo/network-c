@@ -43,9 +43,12 @@ int main() {
         .mutation_rate = 0.5f,
         .mutation_chance = 0.25f,
         .fitness_samples = 1000,
-        .selection_type = TOURNAMENT,
+        .selection_type = TOURNAMENT_SELECTION,
         .tournament_size = 4,
-        .activation_hidden = LEAKY_RELU
+        .activation_hidden = LEAKY_RELU,
+        .crossover_type = UNIFORM_CROSSOVER,
+        .mutation_type = UNIFORM_MUTATION,
+        .logging = false
     };
 
     clock_t ga_start = clock();

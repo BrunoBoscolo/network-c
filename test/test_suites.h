@@ -24,6 +24,9 @@ const char* test_backprop_overfit_single_instance();
 // test_optimizers.c
 const char* optimizers_test_suite();
 
+// test_genetic_operators.c
+const char* genetic_operators_suite();
+
 // Add declarations for other test suites here
 
 // A function to run all test suites

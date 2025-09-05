@@ -242,65 +242,6 @@ double randn(double mu, double sigma) {
     return (mu + sigma * (double)x1);
 }
 
-// Applies random uniform mutation
-void random_uniform_mutation(NeuralNetwork* net, float mutation_rate, float mutation_chance) {
-    // Mutate weights
-    for (int i = 0; i < net->num_layers - 1; i++) {
-        for (int r = 0; r < net->weights[i]->rows; r++) {
-            for (int c = 0; c < net->weights[i]->cols; c++) {
-                if (((double)rand() / RAND_MAX) < mutation_chance) {
-                    net->weights[i]->data[r][c] += ((double)rand() / RAND_MAX - 0.5) * mutation_rate;
-                }
-            }
-        }
-    }
-    // Mutate biases
-    for (int i = 0; i < net->num_layers - 1; i++) {
-        for (int c = 0; c < net->biases[i]->cols; c++) {
-             if (((double)rand() / RAND_MAX) < mutation_chance) {
-                net->biases[i]->data[0][c] += ((double)rand() / RAND_MAX - 0.5) * mutation_rate;
-            }
-        }
-    }
-}
-
-
-// Applies Gaussian mutation
-void gaussian_mutation(NeuralNetwork* net, float mutation_chance, double mutation_std_dev) {
-    // Mutate weights
-    for (int i = 0; i < net->num_layers - 1; i++) {
-        for (int r = 0; r < net->weights[i]->rows; r++) {
-            for (int c = 0; c < net->weights[i]->cols; c++) {
-                if (((double)rand() / RAND_MAX) < mutation_chance) {
-                    net->weights[i]->data[r][c] += randn(0, mutation_std_dev);
-                }
-            }
-        }
-    }
-    // Mutate biases
-    for (int i = 0; i < net->num_layers - 1; i++) {
-        for (int c = 0; c < net->biases[i]->cols; c++) {
-             if (((double)rand() / RAND_MAX) < mutation_chance) {
-                net->biases[i]->data[0][c] += randn(0, mutation_std_dev);
-            }
-        }
-    }
-}
-
-// Mutates the network's parameters
-void mutate_network(NeuralNetwork* net, float mutation_rate, float mutation_chance, MutationType mutation_type, double mutation_std_dev) {
-    switch (mutation_type) {
-        case RANDOM_UNIFORM:
-            random_uniform_mutation(net, mutation_rate, mutation_chance);
-            break;
-        case GAUSSIAN:
-            gaussian_mutation(net, mutation_chance, mutation_std_dev);
-            break;
-        default:
-            random_uniform_mutation(net, mutation_rate, mutation_chance);
-            break;
-    }
-}
 
 // Creates a deep copy of a neural network
 NeuralNetwork* clone_network(const NeuralNetwork* src_net) {

@@ -1,8 +1,12 @@
 #include "gann.h"
+#include "selection.h"
+#include "crossover.h"
+#include "mutation.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 // --- Helper functions (private to this file) ---
 
@@ -64,50 +68,67 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
 
 // --- High-Level API Implementation ---
 
-NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
-    if (!params || !train_dataset || !params->architecture || params->num_layers < 2 ||
-        params->population_size <= 0 || params->num_generations <= 0 ||
-        params->mutation_rate < 0.0f || params->mutation_chance < 0.0f || params->mutation_chance > 1.0f) {
-        fprintf(stderr, "Error: Invalid parameters for gann_train.\n");
+NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset) {
+    const GannTrainParams* base_params = &params->base_params;
+
+    if (!base_params || !train_dataset || !base_params->architecture || base_params->num_layers < 2 ||
+        base_params->population_size <= 0 || base_params->num_generations <= 0 ||
+        base_params->mutation_rate < 0.0f || base_params->mutation_chance < 0.0f || base_params->mutation_chance > 1.0f) {
+        fprintf(stderr, "Error: Invalid parameters for gann_evolve.\n");
         return NULL;
     }
 
     // --- 1. Create Initial Population ---
-    NeuralNetwork** population = create_initial_population(params->population_size, params->num_layers, params->architecture, params->activation_hidden, SIGMOID);
+    NeuralNetwork** population = create_initial_population(base_params->population_size, base_params->num_layers, base_params->architecture, base_params->activation_hidden, SIGMOID);
     if (!population) {
         fprintf(stderr, "Failed to create initial population.\n");
         return NULL;
     }
 
-    printf("Created initial population of %d networks.\n", params->population_size);
-    printf("Starting evolution for %d generations...\n", params->num_generations);
+    printf("Created initial population of %d networks.\n", base_params->population_size);
+    printf("Starting evolution for %d generations...\n", base_params->num_generations);
 
     // --- 2. Run Evolutionary Loop ---
-    for (int gen = 0; gen < params->num_generations; gen++) {
-        NetworkFitness* population_with_fitness = malloc(params->population_size * sizeof(NetworkFitness));
+    for (int gen = 0; gen < base_params->num_generations; gen++) {
+        NetworkFitness* population_with_fitness = malloc(base_params->population_size * sizeof(NetworkFitness));
         if (!population_with_fitness) {
              fprintf(stderr, "Failed to allocate memory for population fitness.\n");
              break; // Exit loop
         }
 
         double best_accuracy_in_gen = 0.0;
-        for (int i = 0; i < params->population_size; i++) {
+        double fitness_sum = 0;
+        for (int i = 0; i < base_params->population_size; i++) {
             population_with_fitness[i].network = population[i];
-            population_with_fitness[i].fitness = calculate_fitness(population[i], train_dataset, params->fitness_samples);
+            population_with_fitness[i].fitness = calculate_fitness(population[i], train_dataset, base_params->fitness_samples);
+            fitness_sum += population_with_fitness[i].fitness;
             if (population_with_fitness[i].fitness > best_accuracy_in_gen) {
                 best_accuracy_in_gen = population_with_fitness[i].fitness;
             }
         }
-        printf("Generation %d/%d | Best Accuracy: %.2f%%\n", gen + 1, params->num_generations, best_accuracy_in_gen * 100.0);
+
+        double fitness_mean = fitness_sum / base_params->population_size;
+        double fitness_std_dev = 0;
+        for (int i = 0; i < base_params->population_size; i++) {
+            fitness_std_dev += pow(population_with_fitness[i].fitness - fitness_mean, 2);
+        }
+        fitness_std_dev = sqrt(fitness_std_dev / base_params->population_size);
+
+        if (base_params->logging) {
+            printf("Generation %d/%d | Best Accuracy: %.2f%% | Avg Fitness: %.4f | Fitness StdDev: %.4f\n",
+                   gen + 1, base_params->num_generations, best_accuracy_in_gen * 100.0, fitness_mean, fitness_std_dev);
+        }
 
         int num_fittest;
-        NetworkFitness* fittest_networks_info = select_fittest(population_with_fitness, params->population_size, &num_fittest, params->selection_type, params->tournament_size);
+        NetworkFitness* fittest_networks_info = params->selection_func(population_with_fitness, base_params->population_size, &num_fittest, (SelectionType)base_params->selection_type, base_params->tournament_size);
 
-        NeuralNetwork** new_population = reproduce(fittest_networks_info, num_fittest, params->population_size, params->crossover_type);
+        // For simplicity, we are not making reproduce function pluggable.
+        // It could be a future enhancement.
+        NeuralNetwork** new_population = reproduce(fittest_networks_info, num_fittest, base_params->population_size, (CrossoverType)base_params->crossover_type);
 
         // Mutate the new population
-        for (int i = 0; i < params->population_size; i++) {
-            mutate_network(new_population[i], params->mutation_rate, params->mutation_chance, params->mutation_type, params->mutation_std_dev);
+        for (int i = 0; i < base_params->population_size; i++) {
+            params->mutation_func(new_population[i], base_params->mutation_rate, base_params->mutation_chance, (MutationType)base_params->mutation_type, base_params->mutation_std_dev, gen, base_params->num_generations, fitness_std_dev);
         }
 
         // Free old population (but not the networks themselves, as they are pointed to by fittest_networks_info)
@@ -120,7 +141,7 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
     // --- 3. Find Best Network from the final population ---
     NeuralNetwork* best_net = NULL;
     double best_overall_accuracy = 0.0;
-    for (int i = 0; i < params->population_size; i++) {
+    for (int i = 0; i < base_params->population_size; i++) {
         double accuracy = calculate_fitness(population[i], train_dataset, train_dataset->num_items); // Final evaluation on full dataset
         if (accuracy > best_overall_accuracy) {
             best_overall_accuracy = accuracy;
@@ -133,12 +154,22 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
     printf("Evolution finished. Best accuracy: %.2f%%\n", best_overall_accuracy * 100.0);
 
     // --- 4. Cleanup ---
-    for (int i = 0; i < params->population_size; i++) {
+    for (int i = 0; i < base_params->population_size; i++) {
         free_neural_network(population[i]);
     }
     free(population);
 
     return best_net; // Caller is responsible for freeing this network
+}
+
+NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
+    GannEvolveParams evolve_params = {
+        .base_params = *params,
+        .selection_func = select_fittest,
+        .crossover_func = crossover,
+        .mutation_func = mutate_network
+    };
+    return gann_evolve(&evolve_params, train_dataset);
 }
 
 int gann_predict(const NeuralNetwork* net, const double* input_data) {

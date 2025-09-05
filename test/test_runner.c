@@ -28,6 +28,9 @@ const char* all_suites() {
     // Run tests from test_optimizers.c
     mu_run_test(optimizers_test_suite);
 
+    // Run tests from test_genetic_operators.c
+    mu_run_test(genetic_operators_suite);
+
     return NULL;
 }
 

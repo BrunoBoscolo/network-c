@@ -2,19 +2,7 @@
 #define EVOLUTION_H
 
 #include "neural_network.h"
-
-// Enum for selection strategies
-typedef enum {
-    ELITE,
-    TOURNAMENT
-} SelectionType;
-
-// Enum for crossover strategies
-typedef enum {
-    UNIFORM,
-    SINGLE_POINT,
-    TWO_POINT
-} CrossoverType;
+#include "crossover.h"
 
 // A struct to hold a network and its fitness score
 typedef struct {
@@ -23,15 +11,6 @@ typedef struct {
 } NetworkFitness;
 
 // --- Evolution Functions ---
-
-/**
- * @brief Performs crossover between two parent networks to create a child.
- * @param parent1 The first parent network.
- * @param parent2 The second parent network.
- * @param crossover_type The crossover strategy to use.
- * @return A new network created by combining the parents' genes.
- */
-NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type);
 
 /**
  * @brief Creates the initial population of random neural networks.
@@ -43,17 +22,6 @@ NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* pare
  * @return An array of pointers to the newly created networks.
  */
 NeuralNetwork** create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
-
-/**
- * @brief Selects the fittest individuals from a population.
- * @param population_with_fitness An array of networks with their fitness scores.
- * @param population_size The size of the population.
- * @param num_fittest A pointer to an integer that will be filled with the number of fittest individuals selected.
- * @param selection_type The selection strategy to use.
- * @param tournament_size The size of the tournament, if using tournament selection.
- * @return An array of the selected fittest networks.
- */
-NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, SelectionType selection_type, int tournament_size);
 
 /**
  * @brief Creates a new generation of networks through reproduction.

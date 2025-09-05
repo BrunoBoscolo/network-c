@@ -7,7 +7,7 @@ int main() {
     // Seed the random number generator
     srand(time(NULL));
 
-    printf("--- Starting MNIST Training with the GANN Simple API ---\n");
+    printf("--- Example: Training with Uniform Crossover ---\n");
 
     // --- 1. Load MNIST Data ---
     Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte",
@@ -18,27 +18,26 @@ int main() {
     }
 
     // --- 2. Define Training Parameters ---
-    const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, MNIST_NUM_CLASSES};
+    const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 64, MNIST_NUM_CLASSES};
     GannTrainParams params = {
         .architecture = ARCHITECTURE,
         .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
-        .population_size = 50,
-        .num_generations = 100, // Reduced for a quicker example run
+        .population_size = 30,
+        .num_generations = 50,
         .mutation_rate = 0.5f,
         .mutation_chance = 0.25f,
-        .fitness_samples = 1000,
-        .selection_type = TOURNAMENT_SELECTION,
-        .tournament_size = 4,
-        .activation_hidden = LEAKY_RELU,
-        .crossover_type = TWO_POINT_CROSSOVER,
-        .mutation_type = GAUSSIAN_MUTATION,
-        .mutation_std_dev = 0.2
+        .fitness_samples = 500,
+        .selection_type = ELITISM_SELECTION,
+        .tournament_size = 0,
+        .activation_hidden = RELU,
+        .crossover_type = UNIFORM_CROSSOVER,
+        .mutation_type = UNIFORM_MUTATION,
+        .mutation_std_dev = 0.2,
+        .logging = true
     };
 
-    printf("Network architecture: [");
-    for (int i = 0; i < params.num_layers; i++)
-        printf("%d%s", params.architecture[i], i == params.num_layers - 1 ? "" : ", ");
-    printf("]\n");
+    printf("This example demonstrates uniform crossover.\n");
+    printf("Each gene of a child is randomly chosen from one of the two parents.\n\n");
 
     // --- 3. Run Training ---
     NeuralNetwork* best_net = gann_train(&params, train_dataset);
@@ -46,8 +45,8 @@ int main() {
     // --- 4. Save the Best Network ---
     if (best_net) {
         printf("--------------------\n");
-        if (save_network(best_net, "trained_network.dat")) {
-            printf("Best network saved to trained_network.dat\n");
+        if (save_network(best_net, "ex_uniform_crossover.dat")) {
+            printf("Best network saved to ex_uniform_crossover.dat\n");
         } else {
             fprintf(stderr, "Failed to save the best network.\n");
         }

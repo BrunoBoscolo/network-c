@@ -1,5 +1,6 @@
 #include "minunit.h"
 #include "evolution.h"
+#include "crossover.h"
 #include <math.h>
 #include <stdlib.h>
 
@@ -19,7 +20,7 @@ const char* test_crossover() {
     parent1->biases[0]->data[0][0] = 0.5;
     parent2->biases[0]->data[0][0] = 0.7;
 
-    NeuralNetwork* child = crossover(parent1, parent2, UNIFORM);
+    NeuralNetwork* child = crossover(parent1, parent2, UNIFORM_CROSSOVER);
     mu_assert("Crossover failed to create a child", child != NULL);
 
     // Check if the child's weight is from one of the parents
@@ -61,7 +62,7 @@ const char* test_single_point_crossover() {
     }
 
     srand(42); // Seed for predictable crossover point
-    NeuralNetwork* child = crossover(parent1, parent2, SINGLE_POINT);
+    NeuralNetwork* child = crossover(parent1, parent2, SINGLE_POINT_CROSSOVER);
     mu_assert("Single-point crossover failed to create a child", child != NULL);
 
     srand(42);
@@ -123,7 +124,7 @@ const char* test_two_point_crossover() {
     }
 
     srand(42); // Seed for predictable crossover points
-    NeuralNetwork* child = crossover(parent1, parent2, TWO_POINT);
+    NeuralNetwork* child = crossover(parent1, parent2, TWO_POINT_CROSSOVER);
     mu_assert("Two-point crossover failed to create a child", child != NULL);
 
     srand(42); // Reset seed to get the same points for checking

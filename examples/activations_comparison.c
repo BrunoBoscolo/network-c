@@ -50,9 +50,12 @@ int main() {
             .mutation_rate = 0.5f,
             .mutation_chance = 0.25f,
             .fitness_samples = 1000,
-            .selection_type = TOURNAMENT,
+            .selection_type = TOURNAMENT_SELECTION,
             .tournament_size = 4,
-            .activation_hidden = current_activation
+            .activation_hidden = current_activation,
+            .crossover_type = UNIFORM_CROSSOVER,
+            .mutation_type = UNIFORM_MUTATION,
+            .logging = false
         };
 
         // Train the network

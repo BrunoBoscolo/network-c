@@ -123,7 +123,7 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
                     z_values[l] = matrix_copy(z);
 
                     ActivationType activation_type = (l == net->num_layers - 2) ? net->activation_output : net->activation_hidden;
-                    apply_activation(z, activation_type);
+                    nn_apply_activation(z, activation_type);
                     activations[l + 1] = z; // z is now the activation
                 }
 
@@ -160,7 +160,7 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
                     free_matrix(weights_T);
 
                     Matrix* z_derivative = matrix_copy(z_values[l]);
-                    apply_activation_derivative(z_derivative, net->activation_hidden);
+                    nn_apply_activation_derivative(z_derivative, net->activation_hidden);
 
                     delta = matrix_elementwise_multiply(next_delta, z_derivative);
                     free_matrix(next_delta);

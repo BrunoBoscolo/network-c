@@ -22,8 +22,8 @@ static int get_predicted_class(const Matrix* output) {
 }
 
 // Helper to get the true class from a one-hot encoded label vector
-static int get_true_class(const double* label_row) {
-    for (int i = 0; i < MNIST_NUM_CLASSES; i++) {
+static int get_true_class(const double* label_row, int num_classes) {
+    for (int i = 0; i < num_classes; i++) {
         if (label_row[i] == 1.0) {
             return i;
         }
@@ -39,29 +39,34 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
         num_samples = dataset->num_items;
     }
 
+    // Create a single input matrix to be reused to avoid repeated malloc/free calls.
+    Matrix* input = create_matrix(1, dataset->images->cols);
+    if (!input) {
+        fprintf(stderr, "Error: Failed to create input matrix for fitness calculation.\n");
+        return 0.0; // Cannot calculate fitness
+    }
+
     for (int i = 0; i < num_samples; i++) {
-        // Create a temporary matrix for a single image input
-        Matrix* input = create_matrix(1, dataset->images->cols);
-        if (!input) continue;
+        // Copy the current sample's data into the reusable input matrix.
         memcpy(input->data[0], dataset->images->data[i], dataset->images->cols * sizeof(double));
 
-        Matrix* output = forward_pass(network, input);
+        Matrix* output = nn_forward_pass(network, input);
         if (!output) {
-            free_matrix(input);
-            continue;
+            continue; // Skip this sample if forward pass fails
         }
 
         int predicted_class = get_predicted_class(output);
-        int true_class = get_true_class(dataset->labels->data[i]);
+        int num_classes = network->architecture[network->num_layers - 1];
+        int true_class = get_true_class(dataset->labels->data[i], num_classes);
 
         if (predicted_class == true_class) {
             correct_predictions++;
         }
 
-        free_matrix(input);
-        free_matrix(output);
+        free_matrix(output); // Output matrix is newly created in each pass, so it must be freed.
     }
 
+    free_matrix(input); // Free the reusable input matrix.
     return (double)correct_predictions / num_samples;
 }
 
@@ -79,7 +84,7 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
     }
 
     // --- 1. Create Initial Population ---
-    NeuralNetwork** population = create_initial_population(base_params->population_size, base_params->num_layers, base_params->architecture, base_params->activation_hidden, SIGMOID);
+    NeuralNetwork** population = evo_create_initial_population(base_params->population_size, base_params->num_layers, base_params->architecture, base_params->activation_hidden, base_params->activation_output);
     if (!population) {
         fprintf(stderr, "Failed to create initial population.\n");
         return NULL;
@@ -124,18 +129,23 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
 
         // For simplicity, we are not making reproduce function pluggable.
         // It could be a future enhancement.
-        NeuralNetwork** new_population = reproduce(fittest_networks_info, num_fittest, base_params->population_size, (CrossoverType)base_params->crossover_type);
+        NeuralNetwork** new_population = evo_reproduce(fittest_networks_info, num_fittest, base_params->population_size, (CrossoverType)base_params->crossover_type);
 
         // Mutate the new population
         for (int i = 0; i < base_params->population_size; i++) {
             params->mutation_func(new_population[i], base_params->mutation_rate, base_params->mutation_chance, (MutationType)base_params->mutation_type, base_params->mutation_std_dev, gen, base_params->num_generations, fitness_std_dev);
         }
 
-        // Free old population (but not the networks themselves, as they are pointed to by fittest_networks_info)
-        free(population);
+        // Free the old population's networks before replacing the population
+        for (int i = 0; i < base_params->population_size; i++) {
+            // The new population is made of clones, so we can safely free the old ones.
+            nn_free(population[i]);
+        }
+        free(population); // Free the array of pointers
         free(population_with_fitness);
         free(fittest_networks_info);
-        population = new_population;
+
+        population = new_population; // Point to the new generation
     }
 
     // --- 3. Find Best Network from the final population ---
@@ -146,8 +156,8 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
         if (accuracy > best_overall_accuracy) {
             best_overall_accuracy = accuracy;
             // We need to clone the best network, because the population will be freed.
-            if (best_net) free_neural_network(best_net);
-            best_net = clone_network(population[i]);
+            if (best_net) nn_free(best_net);
+            best_net = nn_clone(population[i]);
         }
     }
 
@@ -155,7 +165,7 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
 
     // --- 4. Cleanup ---
     for (int i = 0; i < base_params->population_size; i++) {
-        free_neural_network(population[i]);
+        nn_free(population[i]);
     }
     free(population);
 
@@ -186,7 +196,7 @@ int gann_predict(const NeuralNetwork* net, const double* input_data) {
     memcpy(input_matrix->data[0], input_data, net->architecture[0] * sizeof(double));
 
     // Perform the forward pass
-    Matrix* output_matrix = forward_pass(net, input_matrix);
+    Matrix* output_matrix = nn_forward_pass(net, input_matrix);
     if (!output_matrix) {
         free_matrix(input_matrix);
         return -1; // Forward pass failed
@@ -211,7 +221,8 @@ double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset) {
     int correct_predictions = 0;
     for (int i = 0; i < dataset->num_items; i++) {
         int prediction = gann_predict(net, dataset->images->data[i]);
-        int true_class = get_true_class(dataset->labels->data[i]);
+        int num_classes = net->architecture[net->num_layers - 1];
+        int true_class = get_true_class(dataset->labels->data[i], num_classes);
 
         if (prediction == true_class) {
             correct_predictions++;

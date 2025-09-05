@@ -8,8 +8,8 @@ extern const double TEST_EPSILON;
 
 const char* test_crossover() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* parent1 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-    NeuralNetwork* parent2 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent1 = nn_create(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent2 = nn_create(3, architecture, SIGMOID, SIGMOID);
 
     // Seed rand() for predictable crossover
     srand(42);
@@ -35,17 +35,17 @@ const char* test_crossover() {
     is_from_parent2 = fabs(child_bias - parent2->biases[0]->data[0][0]) < TEST_EPSILON;
     mu_assert("Child bias is not from either parent", is_from_parent1 || is_from_parent2);
 
-    free_neural_network(parent1);
-    free_neural_network(parent2);
-    free_neural_network(child);
+    nn_free(parent1);
+    nn_free(parent2);
+    nn_free(child);
 
     return NULL;
 }
 
 const char* test_single_point_crossover() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* parent1 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-    NeuralNetwork* parent2 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent1 = nn_create(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent2 = nn_create(3, architecture, SIGMOID, SIGMOID);
 
     // Manually set all weights and biases to be distinct
     for (int i = 0; i < parent1->num_layers - 1; i++) {
@@ -97,17 +97,17 @@ const char* test_single_point_crossover() {
 
     mu_assert("Single-point crossover did not work as expected", passed);
 
-    free_neural_network(parent1);
-    free_neural_network(parent2);
-    free_neural_network(child);
+    nn_free(parent1);
+    nn_free(parent2);
+    nn_free(child);
 
     return NULL;
 }
 
 const char* test_two_point_crossover() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* parent1 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-    NeuralNetwork* parent2 = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent1 = nn_create(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* parent2 = nn_create(3, architecture, SIGMOID, SIGMOID);
 
     // Manually set all weights and biases to be distinct
     for (int i = 0; i < parent1->num_layers - 1; i++) {
@@ -166,9 +166,9 @@ const char* test_two_point_crossover() {
 
     mu_assert("Two-point crossover did not work as expected", passed);
 
-    free_neural_network(parent1);
-    free_neural_network(parent2);
-    free_neural_network(child);
+    nn_free(parent1);
+    nn_free(parent2);
+    nn_free(child);
 
     return NULL;
 }

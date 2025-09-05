@@ -10,7 +10,7 @@ static NeuralNetwork* uniform_crossover(const NeuralNetwork* parent1, const Neur
     }
 
     // Create a new network with the same architecture
-    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    NeuralNetwork* child = nn_create(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
     if (!child) return NULL;
 
     // Perform uniform crossover for weights and biases
@@ -44,7 +44,7 @@ static NeuralNetwork* single_point_crossover(const NeuralNetwork* parent1, const
         return NULL;
     }
 
-    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    NeuralNetwork* child = nn_create(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
     if (!child) return NULL;
 
     int total_weights = 0;
@@ -88,7 +88,7 @@ static NeuralNetwork* two_point_crossover(const NeuralNetwork* parent1, const Ne
         return NULL;
     }
 
-    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    NeuralNetwork* child = nn_create(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
     if (!child) return NULL;
 
     int total_weights = 0;
@@ -139,7 +139,7 @@ static NeuralNetwork* arithmetic_crossover(const NeuralNetwork* parent1, const N
         return NULL;
     }
 
-    NeuralNetwork* child = create_neural_network(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
+    NeuralNetwork* child = nn_create(parent1->num_layers, parent1->architecture, parent1->activation_hidden, parent1->activation_output);
     if (!child) return NULL;
 
     double alpha = (double)rand() / RAND_MAX;

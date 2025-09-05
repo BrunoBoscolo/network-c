@@ -19,8 +19,8 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
 const char* test_rmsprop_update() {
     // 1. Setup
     const int architecture[] = {2, 2};
-    NeuralNetwork* net = create_neural_network(2, architecture, RELU, SIGMOID);
-    initialize_network(net);
+    NeuralNetwork* net = nn_create(2, architecture, RELU, SIGMOID);
+    nn_init(net);
 
     GannBackpropParams params = {
         .learning_rate = 0.01,
@@ -54,7 +54,7 @@ const char* test_rmsprop_update() {
     mu_assert("RMSprop weight update is incorrect", fabs(net->weights[0]->data[0][0] - expected_weight) < 1e-6);
 
     // 4. Cleanup
-    free_neural_network(net);
+    nn_free(net);
     free_matrix(weight_gradient);
     free_matrix(bias_gradient);
 
@@ -65,8 +65,8 @@ const char* test_rmsprop_update() {
 const char* test_adam_update() {
     // 1. Setup
     const int architecture[] = {1, 1};
-    NeuralNetwork* net = create_neural_network(2, architecture, RELU, SIGMOID);
-    initialize_network(net);
+    NeuralNetwork* net = nn_create(2, architecture, RELU, SIGMOID);
+    nn_init(net);
     double initial_weight = net->weights[0]->data[0][0];
 
     GannBackpropParams params = {
@@ -98,7 +98,7 @@ const char* test_adam_update() {
     mu_assert("Adam weight update is incorrect", fabs(net->weights[0]->data[0][0] - expected_weight) < 1e-6);
 
     // 4. Cleanup
-    free_neural_network(net);
+    nn_free(net);
     free_matrix(weight_gradient);
     free_matrix(bias_gradient);
 

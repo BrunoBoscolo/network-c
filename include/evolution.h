@@ -19,9 +19,10 @@ typedef struct {
  * @param architecture The architecture of each network.
  * @param activation_hidden The activation function for the hidden layers.
  * @param activation_output The activation function for the output layer.
- * @return An array of pointers to the newly created networks.
+ * @return An array of pointers to the newly created networks. The caller is responsible
+ * for freeing both the outer array and each `NeuralNetwork*` inside it.
  */
-NeuralNetwork** create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
+NeuralNetwork** evo_create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
 
 /**
  * @brief Creates a new generation of networks through reproduction.
@@ -29,8 +30,9 @@ NeuralNetwork** create_initial_population(int population_size, int num_layers, c
  * @param num_fittest The number of fittest networks.
  * @param new_population_size The size of the new population to create.
  * @param crossover_type The crossover strategy to use.
- * @return An array of pointers to the new generation of networks.
+ * @return An array of pointers to the new generation of networks. The caller is responsible
+ * for freeing both the outer array and each `NeuralNetwork*` inside it.
  */
-NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type);
+NeuralNetwork** evo_reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type);
 
 #endif // EVOLUTION_H

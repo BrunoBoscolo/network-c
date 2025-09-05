@@ -6,14 +6,14 @@
 // --- Evolution Functions Implementation ---
 
 // Creates an initial population of neural networks
-NeuralNetwork** create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
+NeuralNetwork** evo_create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
     NeuralNetwork** population = (NeuralNetwork**)malloc(population_size * sizeof(NeuralNetwork*));
     if (!population) return NULL;
 
     for (int i = 0; i < population_size; i++) {
-        population[i] = create_neural_network(num_layers, architecture, activation_hidden, activation_output);
+        population[i] = nn_create(num_layers, architecture, activation_hidden, activation_output);
         if (population[i]) {
-            initialize_network(population[i]);
+            nn_init(population[i]);
         }
         // TODO: Handle allocation failure
     }
@@ -23,7 +23,7 @@ NeuralNetwork** create_initial_population(int population_size, int num_layers, c
 
 
 // Creates a new generation using crossover
-NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type) {
+NeuralNetwork** evo_reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type) {
     if (num_fittest == 0) return NULL;
 
     NeuralNetwork** new_population = (NeuralNetwork**)malloc(new_population_size * sizeof(NeuralNetwork*));
@@ -40,7 +40,7 @@ NeuralNetwork** reproduce(const NetworkFitness* fittest_networks, int num_fittes
         NeuralNetwork* child = crossover(parent1, parent2, crossover_type);
         if (!child) {
             // Handle crossover failure, e.g., by cloning one parent
-            child = clone_network(parent1);
+            child = nn_clone(parent1);
         }
 
         new_population[i] = child;

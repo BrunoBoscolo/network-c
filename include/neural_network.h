@@ -34,7 +34,7 @@ typedef struct {
  * @param m The matrix to modify.
  * @param activation_type The type of activation function to apply.
  */
-void apply_activation(Matrix* m, ActivationType activation_type);
+void nn_apply_activation(Matrix* m, ActivationType activation_type);
 
 /**
  * @brief Applies the derivative of an activation function element-wise to a matrix.
@@ -42,47 +42,51 @@ void apply_activation(Matrix* m, ActivationType activation_type);
  * @param m The matrix to which the derivative will be applied.
  * @param activation_type The type of activation function derivative to apply.
  */
-void apply_activation_derivative(Matrix* m, ActivationType activation_type);
+void nn_apply_activation_derivative(Matrix* m, ActivationType activation_type);
 
 
 // --- Neural Network Operations ---
 
 /**
- * @brief Creates a new neural network.
+ * @brief Creates a new neural network. The caller is responsible for freeing the network
+ * using `nn_free()`. The network's weights and biases are not initialized.
  * @param num_layers The number of layers.
- * @param architecture An array of integers specifying the number of neurons in each layer.
+ * @param architecture An array of integers specifying the number of neurons in each layer. The library makes a copy of this array.
  * @param activation_hidden The activation function for the hidden layers.
  * @param activation_output The activation function for the output layer.
- * @return A pointer to the newly created NeuralNetwork.
+ * @return A pointer to the newly created NeuralNetwork, or NULL on failure.
  */
-NeuralNetwork* create_neural_network(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
+NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
 
 /**
- * @brief Frees the memory allocated for a neural network.
+ * @brief Frees all memory allocated for a neural network, including its weights and biases.
  * @param net The neural network to free.
  */
-void free_neural_network(NeuralNetwork* net);
+void nn_free(NeuralNetwork* net);
 
 /**
- * @brief Initializes the weights and biases of a neural network with random values.
+ * @brief Initializes the weights and biases of a neural network with random values
+ * using a variant of Xavier/Glorot initialization.
  * @param net The neural network to initialize.
  */
-void initialize_network(NeuralNetwork* net);
+void nn_init(NeuralNetwork* net);
 
 /**
  * @brief Performs a forward pass through the network.
  * @param net The neural network.
  * @param input The input matrix.
- * @return A new matrix containing the output of the network.
+ * @return A new matrix containing the output of the network. The caller is responsible
+ * for freeing this matrix using `free_matrix()`. Returns NULL on failure.
  */
-Matrix* forward_pass(const NeuralNetwork* net, const Matrix* input);
+Matrix* nn_forward_pass(const NeuralNetwork* net, const Matrix* input);
 
 /**
  * @brief Creates a deep copy of a neural network.
  * @param src_net The source network to clone.
- * @return A pointer to the newly cloned NeuralNetwork.
+ * @return A pointer to the newly cloned NeuralNetwork. The caller is responsible for
+ * freeing this network using `nn_free()`. Returns NULL on failure.
  */
-NeuralNetwork* clone_network(const NeuralNetwork* src_net);
+NeuralNetwork* nn_clone(const NeuralNetwork* src_net);
 
 /**
  * @brief Saves a neural network to a file.
@@ -90,13 +94,14 @@ NeuralNetwork* clone_network(const NeuralNetwork* src_net);
  * @param filepath The path to the file.
  * @return 1 on success, 0 on failure.
  */
-int save_network(const NeuralNetwork* net, const char* filepath);
+int nn_save(const NeuralNetwork* net, const char* filepath);
 
 /**
  * @brief Loads a neural network from a file.
  * @param filepath The path to the file.
- * @return A pointer to the loaded NeuralNetwork.
+ * @return A pointer to the loaded NeuralNetwork. The caller is responsible for freeing
+ * this network using `nn_free()`. Returns NULL on failure.
  */
-NeuralNetwork* load_network(const char* filepath);
+NeuralNetwork* nn_load(const char* filepath);
 
 #endif // NEURAL_NETWORK_H

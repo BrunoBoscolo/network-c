@@ -36,6 +36,7 @@ typedef struct {
     SelectionType selection_type;   /**< The method for selecting the fittest individuals (e.g., ELITE, TOURNAMENT). */
     int tournament_size;            /**< The number of individuals to compete in a tournament, if tournament selection is used. */
     ActivationType activation_hidden; /**< The activation function to use for the hidden layers. */
+    ActivationType activation_output; /**< The activation function to use for the output layer. */
     CrossoverType crossover_type;   /**< The crossover strategy to use. */
     MutationType mutation_type;     /**< The mutation strategy to use. */
     double mutation_std_dev;        /**< The standard deviation for Gaussian mutation. */

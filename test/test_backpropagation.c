@@ -23,8 +23,8 @@ const char* test_backprop_overfit_single_instance() {
     };
 
     // 3. Create and train the network
-    NeuralNetwork* net = create_neural_network(params.num_layers, params.architecture, params.activation_hidden, params.activation_output);
-    initialize_network(net);
+    NeuralNetwork* net = nn_create(params.num_layers, params.architecture, params.activation_hidden, params.activation_output);
+    nn_init(net);
     backpropagate(net, dummy_dataset, &params);
 
     // 4. Test the prediction
@@ -42,7 +42,7 @@ const char* test_backprop_overfit_single_instance() {
     mu_assert("Prediction should match the label after training", prediction == actual_label);
 
     // 5. Cleanup
-    free_neural_network(net);
+    nn_free(net);
     free_dataset(dummy_dataset);
 
     return NULL;

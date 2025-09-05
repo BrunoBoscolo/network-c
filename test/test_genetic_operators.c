@@ -13,8 +13,8 @@ static NetworkFitness test_population[NUM_TEST_NETWORKS];
 void test_setup_genetic_operators() {
     int architecture[] = {2, 3, 1};
     for (int i = 0; i < NUM_TEST_NETWORKS; i++) {
-        test_networks[i] = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-        initialize_network(test_networks[i]);
+        test_networks[i] = nn_create(3, architecture, SIGMOID, SIGMOID);
+        nn_init(test_networks[i]);
         test_population[i].network = test_networks[i];
         test_population[i].fitness = (double)rand() / RAND_MAX;
     }
@@ -22,7 +22,7 @@ void test_setup_genetic_operators() {
 
 void test_teardown_genetic_operators() {
     for (int i = 0; i < NUM_TEST_NETWORKS; i++) {
-        free_neural_network(test_networks[i]);
+        nn_free(test_networks[i]);
     }
 }
 
@@ -47,23 +47,23 @@ const char* test_rank_selection() {
 const char* test_arithmetic_crossover() {
     NeuralNetwork* child = crossover(test_networks[0], test_networks[1], ARITHMETIC_CROSSOVER);
     mu_assert("Arithmetic crossover returned NULL", child != NULL);
-    free_neural_network(child);
+    nn_free(child);
     return NULL;
 }
 
 const char* test_non_uniform_mutation() {
-    NeuralNetwork* net = clone_network(test_networks[0]);
+    NeuralNetwork* net = nn_clone(test_networks[0]);
     mutate_network(net, 0.1, 0.1, NON_UNIFORM_MUTATION, 0.1, 0, 100, 0.1);
     // No assertion, just checking it runs without crashing
-    free_neural_network(net);
+    nn_free(net);
     return NULL;
 }
 
 const char* test_adaptive_mutation() {
-    NeuralNetwork* net = clone_network(test_networks[0]);
+    NeuralNetwork* net = nn_clone(test_networks[0]);
     mutate_network(net, 0.1, 0.1, ADAPTIVE_MUTATION, 0.1, 0, 100, 0.1);
     // No assertion, just checking it runs without crashing
-    free_neural_network(net);
+    nn_free(net);
     return NULL;
 }
 

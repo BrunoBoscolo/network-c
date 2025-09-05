@@ -30,6 +30,7 @@ int main() {
         .selection_type = TOURNAMENT_SELECTION,
         .tournament_size = 4,
         .activation_hidden = LEAKY_RELU,
+        .activation_output = SIGMOID,
         .crossover_type = TWO_POINT_CROSSOVER,
         .mutation_type = GAUSSIAN_MUTATION,
         .mutation_std_dev = 0.2
@@ -46,12 +47,12 @@ int main() {
     // --- 4. Save the Best Network ---
     if (best_net) {
         printf("--------------------\n");
-        if (save_network(best_net, "trained_network.dat")) {
+        if (nn_save(best_net, "trained_network.dat")) {
             printf("Best network saved to trained_network.dat\n");
         } else {
             fprintf(stderr, "Failed to save the best network.\n");
         }
-        free_neural_network(best_net);
+        nn_free(best_net);
     } else {
         fprintf(stderr, "Training failed to produce a network.\n");
     }

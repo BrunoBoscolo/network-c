@@ -8,8 +8,8 @@ extern const double TEST_EPSILON;
 // Test for neural network creation
 const char* test_nn_creation() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-    initialize_network(net);
+    NeuralNetwork* net = nn_create(3, architecture, SIGMOID, SIGMOID);
+    nn_init(net);
 
     mu_assert("NN creation failed", net != NULL);
     mu_assert("NN num_layers is wrong", net->num_layers == 3);
@@ -30,14 +30,14 @@ const char* test_nn_creation() {
     mu_assert("Biases[1] rows incorrect", net->biases[1]->rows == 1);
     mu_assert("Biases[1] cols incorrect", net->biases[1]->cols == 1);
 
-    free_neural_network(net);
+    nn_free(net);
     return NULL;
 }
 
 // Test for the forward pass
 const char* test_nn_forward_pass() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* net = nn_create(3, architecture, SIGMOID, SIGMOID);
 
     // Manually set weights and biases for a predictable outcome
     // Layer 1 weights: [[0.1, 0.2], [0.3, 0.4]]
@@ -71,13 +71,13 @@ const char* test_nn_forward_pass() {
     //   o_out = sigmoid(0.30559) = 0.5758
     double expected_output = 0.5758;
 
-    Matrix* output = forward_pass(net, input);
+    Matrix* output = nn_forward_pass(net, input);
     mu_assert("Forward pass returned NULL", output != NULL);
 
     double actual_output = output->data[0][0];
     mu_assert("Forward pass calculation is incorrect", fabs(actual_output - expected_output) < 1e-4);
 
-    free_neural_network(net);
+    nn_free(net);
     free_matrix(input);
     free_matrix(output);
 
@@ -86,10 +86,10 @@ const char* test_nn_forward_pass() {
 
 const char* test_gaussian_mutation() {
     int architecture[] = {2, 2, 1};
-    NeuralNetwork* net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
-    initialize_network(net);
+    NeuralNetwork* net = nn_create(3, architecture, SIGMOID, SIGMOID);
+    nn_init(net);
 
-    NeuralNetwork* net_clone = clone_network(net);
+    NeuralNetwork* net_clone = nn_clone(net);
 
     srand(42);
     mutate_network(net, 0.1f, 1.0f, GAUSSIAN_MUTATION, 0.2, 0, 0, 0); // 100% chance of mutation
@@ -110,8 +110,8 @@ const char* test_gaussian_mutation() {
 
     mu_assert("Gaussian mutation did not change network weights", changed);
 
-    free_neural_network(net);
-    free_neural_network(net_clone);
+    nn_free(net);
+    nn_free(net_clone);
 
     return NULL;
 }

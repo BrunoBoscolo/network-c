@@ -6,7 +6,7 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
     printf("--- Starting Backpropagation Training ---\n");
 
     // 1. Create the Neural Network
-    NeuralNetwork* net = create_neural_network(
+    NeuralNetwork* net = nn_create(
         params->num_layers,
         params->architecture,
         params->activation_hidden,
@@ -18,7 +18,7 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
     }
 
     // 2. Initialize weights and biases
-    initialize_network(net);
+    nn_init(net);
 
     // 3. Start the training process
     printf("Training with parameters:\n");

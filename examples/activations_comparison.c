@@ -53,6 +53,7 @@ int main() {
             .selection_type = TOURNAMENT_SELECTION,
             .tournament_size = 4,
             .activation_hidden = current_activation,
+            .activation_output = SIGMOID, // Use sigmoid for output layer
             .crossover_type = UNIFORM_CROSSOVER,
             .mutation_type = UNIFORM_MUTATION,
             .logging = false
@@ -72,7 +73,7 @@ int main() {
         printf("--------------------\n");
 
         // Cleanup
-        free_neural_network(best_net);
+        nn_free(best_net);
     }
 
     // --- 4. Final Cleanup ---

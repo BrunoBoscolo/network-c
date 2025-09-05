@@ -7,17 +7,17 @@ extern const double TEST_EPSILON;
 
 const char* test_save_and_load_network() {
     int architecture[] = {2, 3, 1};
-    NeuralNetwork* original_net = create_neural_network(3, architecture, SIGMOID, SIGMOID);
+    NeuralNetwork* original_net = nn_create(3, architecture, SIGMOID, SIGMOID);
 
     // Set some specific values to test
     original_net->weights[0]->data[0][0] = 0.123;
     original_net->biases[0]->data[0][0] = 0.456;
 
     const char* filepath = "test_network.dat";
-    int result = save_network(original_net, filepath);
+    int result = nn_save(original_net, filepath);
     mu_assert("Failed to save network", result == 1);
 
-    NeuralNetwork* loaded_net = load_network(filepath);
+    NeuralNetwork* loaded_net = nn_load(filepath);
     mu_assert("Failed to load network", loaded_net != NULL);
 
     // Compare architecture
@@ -40,8 +40,8 @@ const char* test_save_and_load_network() {
         }
     }
 
-    free_neural_network(original_net);
-    free_neural_network(loaded_net);
+    nn_free(original_net);
+    nn_free(loaded_net);
     remove(filepath);
 
     return NULL;

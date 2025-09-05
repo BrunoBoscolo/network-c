@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     }
 
     // 1. Load the pre-trained network
-    NeuralNetwork* net = load_network(network_filepath);
+    NeuralNetwork* net = nn_load(network_filepath);
     if (!net) {
         fprintf(stderr, "Failed to load network. Please run the training example first.\n");
         return 1;
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     Dataset* test_dataset = load_mnist_dataset("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte");
     if (!test_dataset) {
         fprintf(stderr, "Failed to load the MNIST test dataset.\n");
-        free_neural_network(net);
+        nn_free(net);
         return 1;
     }
 
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     printf("----------------------------------\n");
 
     // 5. Cleanup
-    free_neural_network(net);
+    nn_free(net);
     free_dataset(test_dataset);
 
     return 0;

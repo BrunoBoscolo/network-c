@@ -162,6 +162,10 @@ static NeuralNetwork* arithmetic_crossover(const NeuralNetwork* parent1, const N
 
 
 NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type) {
+    if (parent1 == NULL || parent2 == NULL) {
+        fprintf(stderr, "Error: Cannot perform crossover. Provided parent network(s) is NULL.\n");
+        return NULL;
+    }
     switch (crossover_type) {
         case UNIFORM_CROSSOVER:
             return uniform_crossover(parent1, parent2);

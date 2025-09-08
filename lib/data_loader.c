@@ -14,6 +14,10 @@ static int swap_endian(int val) {
 
 // Loads the MNIST dataset from the specified files
 Dataset* load_mnist_dataset(const char* image_path, const char* label_path) {
+    if (image_path == NULL || label_path == NULL) {
+        fprintf(stderr, "Error: Provided image or label path is NULL.\n");
+        return NULL;
+    }
     // --- Open Files ---
     FILE* image_file = fopen(image_path, "rb");
     FILE* label_file = fopen(label_path, "rb");
@@ -166,7 +170,10 @@ Dataset* create_dummy_dataset(int num_items) {
 
 // Frees the memory allocated for a dataset
 void free_dataset(Dataset* dataset) {
-    if (!dataset) return;
+    if (dataset == NULL) {
+        fprintf(stderr, "Warning: free_dataset called with NULL dataset.\n");
+        return;
+    }
     free_matrix(dataset->images);
     free_matrix(dataset->labels);
     free(dataset);

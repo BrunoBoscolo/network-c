@@ -44,7 +44,10 @@ Matrix* create_matrix(int rows, int cols) {
 
 // Frees the memory of a matrix
 void free_matrix(Matrix* m) {
-    if (!m) return;
+    if (m == NULL) {
+        fprintf(stderr, "Warning: free_matrix called with NULL matrix.\n");
+        return;
+    }
     if (m->data) {
         for (int i = 0; i < m->rows; i++) {
             free(m->data[i]);
@@ -56,8 +59,8 @@ void free_matrix(Matrix* m) {
 
 // Prints the matrix data (for debugging)
 void print_matrix(const Matrix* m) {
-    if (!m) {
-        printf("(Null Matrix)\n");
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot print matrix. Provided matrix is NULL.\n");
         return;
     }
     for (int i = 0; i < m->rows; i++) {
@@ -70,7 +73,8 @@ void print_matrix(const Matrix* m) {
 
 // Computes the dot product of two matrices
 Matrix* dot_product(const Matrix* m1, const Matrix* m2) {
-    if (!m1 || !m2) {
+    if (m1 == NULL || m2 == NULL) {
+        fprintf(stderr, "Error: Cannot compute dot product. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -94,7 +98,8 @@ Matrix* dot_product(const Matrix* m1, const Matrix* m2) {
 
 // Adds a bias vector to each row of a matrix
 void add_bias(Matrix* m, const Matrix* bias) {
-    if (!m || !bias) {
+    if (m == NULL || bias == NULL) {
+        fprintf(stderr, "Error: Cannot add bias. Provided matrix or bias is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
@@ -112,7 +117,8 @@ void add_bias(Matrix* m, const Matrix* bias) {
 
 // Creates a new matrix that is the transpose of the input matrix
 Matrix* matrix_transpose(const Matrix* m) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot transpose matrix. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -129,7 +135,8 @@ Matrix* matrix_transpose(const Matrix* m) {
 
 // Performs element-wise multiplication (Hadamard product) of two matrices
 Matrix* matrix_elementwise_multiply(const Matrix* m1, const Matrix* m2) {
-    if (!m1 || !m2) {
+    if (m1 == NULL || m2 == NULL) {
+        fprintf(stderr, "Error: Cannot perform element-wise multiply. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -151,7 +158,8 @@ Matrix* matrix_elementwise_multiply(const Matrix* m1, const Matrix* m2) {
 
 // Subtracts the second matrix from the first matrix
 Matrix* matrix_subtract(const Matrix* m1, const Matrix* m2) {
-    if (!m1 || !m2) {
+    if (m1 == NULL || m2 == NULL) {
+        fprintf(stderr, "Error: Cannot subtract matrix. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -173,7 +181,8 @@ Matrix* matrix_subtract(const Matrix* m1, const Matrix* m2) {
 
 // Adds two matrices
 Matrix* matrix_add(const Matrix* m1, const Matrix* m2) {
-    if (!m1 || !m2) {
+    if (m1 == NULL || m2 == NULL) {
+        fprintf(stderr, "Error: Cannot add matrix. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -195,7 +204,8 @@ Matrix* matrix_add(const Matrix* m1, const Matrix* m2) {
 
 // Scales a matrix by a scalar value
 Matrix* matrix_scale(const Matrix* m, double scalar) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot scale matrix. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -212,7 +222,8 @@ Matrix* matrix_scale(const Matrix* m, double scalar) {
 
 // Creates a matrix from a 1D array
 Matrix* matrix_from_array(const double* array, int rows, int cols) {
-    if (!array) {
+    if (array == NULL) {
+        fprintf(stderr, "Error: Cannot create matrix from array. Provided array is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -229,7 +240,8 @@ Matrix* matrix_from_array(const double* array, int rows, int cols) {
 
 // Creates a deep copy of a matrix
 Matrix* matrix_copy(const Matrix* m) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot copy matrix. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -246,7 +258,8 @@ Matrix* matrix_copy(const Matrix* m) {
 
 // Extracts a single row from a matrix
 Matrix* matrix_get_row(const Matrix* m, int row) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot get matrix row. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }

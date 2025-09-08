@@ -3,6 +3,10 @@
 #include <stdlib.h>
 
 NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset) {
+    if (params == NULL || train_dataset == NULL || params->architecture == NULL) {
+        fprintf(stderr, "Error: Cannot train with backprop. Provided params, dataset or architecture is NULL.\n");
+        return NULL;
+    }
     printf("--- Starting Backpropagation Training ---\n");
 
     // 1. Create the Neural Network

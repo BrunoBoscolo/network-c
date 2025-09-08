@@ -111,6 +111,10 @@ static void adaptive_mutation(NeuralNetwork* network, float initial_mutation_rat
 
 
 void mutate_network(NeuralNetwork* network, float mutation_rate, float mutation_chance, MutationType mutation_type, double mutation_std_dev, int current_gen, int max_gens, double fitness_std_dev) {
+    if (network == NULL) {
+        fprintf(stderr, "Error: Cannot mutate network. Provided network is NULL.\n");
+        return;
+    }
     switch (mutation_type) {
         case UNIFORM_MUTATION:
             uniform_mutation(network, mutation_rate, mutation_chance);

@@ -12,6 +12,10 @@
 // --- Optimizer-specific Weight Update Functions ---
 
 void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
+    if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
+        fprintf(stderr, "Error: Cannot update weights (SGD). Provided arguments are NULL.\n");
+        return;
+    }
     double lr_batch = params->learning_rate / batch_size;
     for (int l = 0; l < net->num_layers - 1; l++) {
         // Update weights
@@ -28,6 +32,10 @@ void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** 
 }
 
 void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
+    if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
+        fprintf(stderr, "Error: Cannot update weights (RMSprop). Provided arguments are NULL.\n");
+        return;
+    }
     double lr = params->learning_rate;
     double beta2 = params->beta2;
     double epsilon = params->epsilon;
@@ -51,6 +59,10 @@ void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matri
 }
 
 void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t) {
+    if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
+        fprintf(stderr, "Error: Cannot update weights (Adam). Provided arguments are NULL.\n");
+        return;
+    }
     double lr = params->learning_rate;
     double beta1 = params->beta1;
     double beta2 = params->beta2;
@@ -89,6 +101,10 @@ void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix**
 
 // Main function to train the network using backpropagation
 void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params) {
+    if (net == NULL || train_dataset == NULL || params == NULL) {
+        fprintf(stderr, "Error: Cannot backpropagate. Provided network, dataset or params is NULL.\n");
+        return;
+    }
     int t = 0; // Timestep for Adam
     for (int epoch = 0; epoch < params->epochs; epoch++) {
         // Here we would shuffle the dataset for better training, but for simplicity, we'll iterate sequentially.

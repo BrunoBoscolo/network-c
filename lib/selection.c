@@ -123,6 +123,11 @@ static NetworkFitness* select_fittest_roulette_wheel(NetworkFitness* population_
 
 // Wrapper function to select fittest based on strategy
 NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, SelectionType selection_type, int tournament_size) {
+    if (population_with_fitness == NULL || num_fittest == NULL) {
+        fprintf(stderr, "Error: Cannot select fittest. Provided population or num_fittest pointer is NULL.\n");
+        if (num_fittest) *num_fittest = 0;
+        return NULL;
+    }
     switch (selection_type) {
         case ELITISM_SELECTION:
             return select_fittest_elitism(population_with_fitness, population_size, num_fittest);

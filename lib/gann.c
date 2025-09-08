@@ -218,7 +218,9 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
 }
 
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
-    if (!params) {
+    // Add defensive checks at the beginning of the public API function.
+    if (params == NULL || train_dataset == NULL || params->architecture == NULL) {
+        fprintf(stderr, "Error: Cannot train network. Provided params, dataset or architecture is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }

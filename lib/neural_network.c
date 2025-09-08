@@ -18,7 +18,8 @@ static double leaky_relu_derivative(double x) { return x > 0 ? 1 : 0.01; }
 // --- Public API Functions ---
 
 void nn_apply_activation(Matrix* m, ActivationType activation_type) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot apply activation. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
@@ -36,7 +37,8 @@ void nn_apply_activation(Matrix* m, ActivationType activation_type) {
 }
 
 void nn_apply_activation_derivative(Matrix* m, ActivationType activation_type) {
-    if (!m) {
+    if (m == NULL) {
+        fprintf(stderr, "Error: Cannot apply activation derivative. Provided matrix is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
@@ -58,7 +60,8 @@ NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType
         gann_set_error(GANN_ERROR_INVALID_ARCHITECTURE);
         return NULL;
     }
-    if (!architecture) {
+    if (architecture == NULL) {
+        fprintf(stderr, "Error: Cannot create network. Provided architecture is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -113,7 +116,8 @@ NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType
 }
 
 void nn_init(NeuralNetwork* net) {
-    if (!net) {
+    if (net == NULL) {
+        fprintf(stderr, "Error: Cannot initialize network. Provided network is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
@@ -129,7 +133,10 @@ void nn_init(NeuralNetwork* net) {
 }
 
 void nn_free(NeuralNetwork* net) {
-    if (!net) return;
+    if (net == NULL) {
+        fprintf(stderr, "Warning: nn_free called with NULL network.\n");
+        return;
+    }
     if (net->architecture) free(net->architecture);
     int num_weight_sets = net->num_layers > 1 ? net->num_layers - 1 : 0;
     if (net->weights) {
@@ -160,7 +167,8 @@ void nn_free(NeuralNetwork* net) {
 }
 
 Matrix* nn_forward_pass(const NeuralNetwork* net, const Matrix* input) {
-    if (!net || !input) {
+    if (net == NULL || input == NULL) {
+        fprintf(stderr, "Error: Cannot perform forward pass. Provided network or input is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -197,7 +205,8 @@ Matrix* nn_forward_pass(const NeuralNetwork* net, const Matrix* input) {
 }
 
 NeuralNetwork* nn_clone(const NeuralNetwork* src_net) {
-    if (!src_net) {
+    if (src_net == NULL) {
+        fprintf(stderr, "Error: Cannot clone network. Provided network is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }
@@ -220,7 +229,8 @@ NeuralNetwork* nn_clone(const NeuralNetwork* src_net) {
 }
 
 int nn_save(const NeuralNetwork* net, const char* filepath) {
-    if (!net || !filepath) {
+    if (net == NULL || filepath == NULL) {
+        fprintf(stderr, "Error: Cannot save network. Provided network or filepath is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return 0;
     }
@@ -261,7 +271,8 @@ int nn_save(const NeuralNetwork* net, const char* filepath) {
 }
 
 NeuralNetwork* nn_load(const char* filepath) {
-    if (!filepath) {
+    if (filepath == NULL) {
+        fprintf(stderr, "Error: Cannot load network. Provided filepath is NULL.\n");
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return NULL;
     }

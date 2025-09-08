@@ -7,6 +7,10 @@
 
 // Creates an initial population of neural networks
 NeuralNetwork** evo_create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output) {
+    if (architecture == NULL) {
+        fprintf(stderr, "Error: Cannot create population. Provided architecture is NULL.\n");
+        return NULL;
+    }
     NeuralNetwork** population = (NeuralNetwork**)malloc(population_size * sizeof(NeuralNetwork*));
     if (!population) return NULL;
 
@@ -24,6 +28,10 @@ NeuralNetwork** evo_create_initial_population(int population_size, int num_layer
 
 // Creates a new generation using crossover
 NeuralNetwork** evo_reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type) {
+    if (fittest_networks == NULL) {
+        fprintf(stderr, "Error: Cannot reproduce. Provided fittest_networks is NULL.\n");
+        return NULL;
+    }
     if (num_fittest == 0) return NULL;
 
     NeuralNetwork** new_population = (NeuralNetwork**)malloc(new_population_size * sizeof(NeuralNetwork*));

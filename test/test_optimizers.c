@@ -108,9 +108,54 @@ const char* test_adam_update() {
 }
 
 
+const char* test_sgd_update() {
+    // 1. Setup
+    const int architecture[] = {2, 2};
+    NeuralNetwork* net = nn_create(2, architecture, RELU, SIGMOID);
+    nn_init(net);
+
+    GannBackpropParams params = {
+        .learning_rate = 0.1
+    };
+
+    Matrix* weight_gradient = create_matrix(2, 2);
+    weight_gradient->data[0][0] = 0.2;
+    weight_gradient->data[0][1] = -0.3;
+    weight_gradient->data[1][0] = 0.4;
+    weight_gradient->data[1][1] = -0.5;
+
+    Matrix* bias_gradient = create_matrix(1, 2);
+    bias_gradient->data[0][0] = 0.1;
+    bias_gradient->data[0][1] = -0.15;
+
+    Matrix** weight_gradients = &weight_gradient;
+    Matrix** bias_gradients = &bias_gradient;
+
+    double initial_weight = net->weights[0]->data[0][0];
+    int batch_size = 2;
+
+    // 2. Execution
+    update_weights_sgd(net, weight_gradients, bias_gradients, &params, batch_size);
+
+    // 3. Assertion
+    double grad_w = 0.2;
+    double expected_weight = initial_weight - (params.learning_rate / batch_size) * grad_w;
+
+    mu_assert("SGD weight update is incorrect", fabs(net->weights[0]->data[0][0] - expected_weight) < 1e-6);
+
+    // 4. Cleanup
+    nn_free(net);
+    free_matrix(weight_gradient);
+    free_matrix(bias_gradient);
+
+    return 0;
+}
+
+
 // --- Test Suite ---
 
 const char* optimizers_test_suite() {
+    mu_run_test(test_sgd_update);
     mu_run_test(test_rmsprop_update);
     mu_run_test(test_adam_update);
     return 0;

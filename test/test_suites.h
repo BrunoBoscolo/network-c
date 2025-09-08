@@ -22,13 +22,23 @@ const char* test_single_point_crossover();
 const char* test_two_point_crossover();
 
 // test_backpropagation.c
+const char* test_calculate_mse();
 const char* test_backprop_overfit_single_instance();
+const char* test_backprop_overfit_single_instance_adam();
+const char* test_backprop_overfit_single_instance_rmsprop();
 
 // test_optimizers.c
+const char* test_sgd_update();
 const char* optimizers_test_suite();
 
 // test_genetic_operators.c
 const char* genetic_operators_suite();
+
+// test_data_loader.c
+const char* data_loader_test_suite();
+
+// test_gann_errors.c
+const char* gann_errors_test_suite();
 
 // Add declarations for other test suites here
 

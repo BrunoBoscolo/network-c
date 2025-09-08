@@ -14,7 +14,7 @@ SHARED_LIB = lib$(LIB_NAME).so
 EXAMPLE_BINS = examples/training examples/recognizer examples/activations_comparison examples/backprop_training examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
 
 # --- Tests ---
-TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c test/test_genetic_operators.c
+TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c test/test_genetic_operators.c test/test_data_loader.c test/test_gann_errors.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 TEST_TARGET = test_runner
 

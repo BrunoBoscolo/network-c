@@ -26,13 +26,22 @@ const char* all_suites() {
     mu_run_test(test_two_point_crossover);
 
     // Run tests from test_backpropagation.c
+    mu_run_test(test_calculate_mse);
     mu_run_test(test_backprop_overfit_single_instance);
+    mu_run_test(test_backprop_overfit_single_instance_adam);
+    mu_run_test(test_backprop_overfit_single_instance_rmsprop);
 
     // Run tests from test_optimizers.c
     mu_run_test(optimizers_test_suite);
 
     // Run tests from test_genetic_operators.c
     mu_run_test(genetic_operators_suite);
+
+    // Run tests from test_data_loader.c
+    mu_run_test(data_loader_test_suite);
+
+    // Run tests from test_gann_errors.c
+    mu_run_test(gann_errors_test_suite);
 
     return NULL;
 }

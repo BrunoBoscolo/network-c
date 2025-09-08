@@ -87,8 +87,8 @@ Matrix* dot_product(const Matrix* m1, const Matrix* m2) {
     if (!result) return NULL; // create_matrix sets the error
 
     for (int i = 0; i < m1->rows; i++) {
-        for (int j = 0; j < m2->cols; j++) {
-            for (int k = 0; k < m1->cols; k++) {
+        for (int k = 0; k < m1->cols; k++) {
+            for (int j = 0; j < m2->cols; j++) {
                 result->data[i][j] += m1->data[i][k] * m2->data[k][j];
             }
         }

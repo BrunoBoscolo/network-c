@@ -11,6 +11,15 @@
 
 // --- Helper functions (private to this file) ---
 
+// qsort comparison function for sorting networks by fitness in descending order
+static int compare_fitness_desc(const void* a, const void* b) {
+    const NetworkFitness* nf_a = (const NetworkFitness*)a;
+    const NetworkFitness* nf_b = (const NetworkFitness*)b;
+    if (nf_a->fitness < nf_b->fitness) return 1;
+    if (nf_a->fitness > nf_b->fitness) return -1;
+    return 0;
+}
+
 // Helper to get the index of the max value in a matrix row (the prediction)
 static int get_predicted_class(const Matrix* output) {
     if (!output || !output->data || output->cols == 0) {
@@ -97,6 +106,7 @@ GannTrainParams gann_create_default_params(void) {
         .fitness_samples = 1000,
         .selection_type = TOURNAMENT_SELECTION,
         .tournament_size = 5,
+        .elitism_count = 1,
         .activation_hidden = RELU,
         .activation_output = SIGMOID,
         .crossover_type = UNIFORM_CROSSOVER,
@@ -167,18 +177,58 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
         int num_fittest;
         NetworkFitness* fittest_networks_info = params->selection_func(population_with_fitness, base_params->population_size, &num_fittest, (SelectionType)base_params->selection_type, base_params->tournament_size);
 
-        // For simplicity, we are not making reproduce function pluggable.
-        // It could be a future enhancement.
-        NeuralNetwork** new_population = evo_reproduce(fittest_networks_info, num_fittest, base_params->population_size, (CrossoverType)base_params->crossover_type);
+        // --- Elitism: Preserve the best networks ---
+        int elitism_count = base_params->elitism_count;
+        if (elitism_count > base_params->population_size) elitism_count = base_params->population_size;
 
-        // Mutate the new population
-        for (int i = 0; i < base_params->population_size; i++) {
+        NeuralNetwork** elite_networks = NULL;
+        if (elitism_count > 0) {
+            qsort(population_with_fitness, base_params->population_size, sizeof(NetworkFitness), compare_fitness_desc);
+            elite_networks = malloc(elitism_count * sizeof(NeuralNetwork*));
+            if(elite_networks != NULL) {
+                for (int i = 0; i < elitism_count; i++) {
+                    elite_networks[i] = nn_clone(population_with_fitness[i].network);
+                }
+            }
+        }
+
+        // --- Reproduction ---
+        int children_to_create = base_params->population_size - elitism_count;
+        NeuralNetwork** new_population = evo_reproduce(fittest_networks_info, num_fittest, children_to_create, (CrossoverType)base_params->crossover_type, base_params->tournament_size);
+        if (new_population == NULL) {
+            // Handle reproduction failure
+            free(population_with_fitness);
+            free(fittest_networks_info);
+            if (elite_networks) {
+                for(int i=0; i<elitism_count; i++) nn_free(elite_networks[i]);
+                free(elite_networks);
+            }
+            break;
+        }
+
+        // Mutate the new children
+        for (int i = 0; i < children_to_create; i++) {
             params->mutation_func(new_population[i], base_params->mutation_rate, base_params->mutation_chance, (MutationType)base_params->mutation_type, base_params->mutation_std_dev, gen, base_params->num_generations, fitness_std_dev);
         }
 
+        // --- Combine elites and children ---
+        if (elitism_count > 0 && elite_networks != NULL) {
+            // The `new_population` array is currently of size `children_to_create`.
+            // We need to resize it to fit the elite networks as well.
+            NeuralNetwork** final_population = realloc(new_population, base_params->population_size * sizeof(NeuralNetwork*));
+            if (final_population) {
+                new_population = final_population;
+                // Copy elite networks into the final population array
+                for (int i = 0; i < elitism_count; i++) {
+                    new_population[children_to_create + i] = elite_networks[i];
+                }
+            }
+            free(elite_networks); // free the container for clones
+        }
+
+
         // Free the old population's networks before replacing the population
         for (int i = 0; i < base_params->population_size; i++) {
-            // The new population is made of clones, so we can safely free the old ones.
             nn_free(population[i]);
         }
         free(population); // Free the array of pointers

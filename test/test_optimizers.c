@@ -21,6 +21,7 @@ const char* test_rmsprop_update() {
     const int architecture[] = {2, 2};
     NeuralNetwork* net = nn_create(2, architecture, RELU, SIGMOID);
     nn_init(net);
+    nn_init_optimizer_state(net);
 
     GannBackpropParams params = {
         .learning_rate = 0.01,
@@ -67,6 +68,7 @@ const char* test_adam_update() {
     const int architecture[] = {1, 1};
     NeuralNetwork* net = nn_create(2, architecture, RELU, SIGMOID);
     nn_init(net);
+    nn_init_optimizer_state(net);
     double initial_weight = net->weights[0]->data[0][0];
 
     GannBackpropParams params = {

@@ -72,6 +72,7 @@ NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType
     net->num_layers = num_layers;
     net->activation_hidden = activation_hidden;
     net->activation_output = activation_output;
+    net->optimizer_state = NULL; // Initialize optimizer state to NULL
 
     net->architecture = (int*)malloc(num_layers * sizeof(int));
     if (!net->architecture) {
@@ -84,12 +85,8 @@ NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType
     int num_weight_sets = num_layers - 1;
     net->weights = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
     net->biases = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
-    net->m_weights = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
-    net->v_weights = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
-    net->m_biases = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
-    net->v_biases = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
 
-    if (!net->weights || !net->biases || !net->m_weights || !net->v_weights || !net->m_biases || !net->v_biases) {
+    if (!net->weights || !net->biases) {
         nn_free(net);
         gann_set_error(GANN_ERROR_ALLOC_FAILED);
         return NULL;
@@ -98,11 +95,7 @@ NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType
     for (int i = 0; i < num_weight_sets; i++) {
         net->weights[i] = create_matrix(architecture[i], architecture[i+1]);
         net->biases[i] = create_matrix(1, architecture[i+1]);
-        net->m_weights[i] = create_matrix(architecture[i], architecture[i+1]);
-        net->v_weights[i] = create_matrix(architecture[i], architecture[i+1]);
-        net->m_biases[i] = create_matrix(1, architecture[i+1]);
-        net->v_biases[i] = create_matrix(1, architecture[i+1]);
-        if (!net->weights[i] || !net->biases[i] || !net->m_weights[i] || !net->v_weights[i] || !net->m_biases[i] || !net->v_biases[i]) {
+        if (!net->weights[i] || !net->biases[i]) {
             nn_free(net);
             // create_matrix already sets the error code
             return NULL;
@@ -128,6 +121,49 @@ void nn_init(NeuralNetwork* net) {
     gann_set_error(GANN_SUCCESS);
 }
 
+int nn_init_optimizer_state(NeuralNetwork* net) {
+    if (net == NULL) {
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
+        return 0;
+    }
+    // If it's already allocated, do nothing.
+    if (net->optimizer_state) {
+        return 1;
+    }
+
+    net->optimizer_state = (OptimizerState*)calloc(1, sizeof(OptimizerState));
+    if (!net->optimizer_state) {
+        gann_set_error(GANN_ERROR_ALLOC_FAILED);
+        return 0;
+    }
+
+    int num_weight_sets = net->num_layers - 1;
+    net->optimizer_state->m_weights = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
+    net->optimizer_state->v_weights = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
+    net->optimizer_state->m_biases = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
+    net->optimizer_state->v_biases = (Matrix**)calloc(num_weight_sets, sizeof(Matrix*));
+
+    if (!net->optimizer_state->m_weights || !net->optimizer_state->v_weights || !net->optimizer_state->m_biases || !net->optimizer_state->v_biases) {
+        nn_free(net); // This will handle partial allocation inside optimizer_state
+        gann_set_error(GANN_ERROR_ALLOC_FAILED);
+        return 0;
+    }
+
+    for (int i = 0; i < num_weight_sets; i++) {
+        int rows = net->architecture[i];
+        int cols = net->architecture[i+1];
+        net->optimizer_state->m_weights[i] = create_matrix(rows, cols);
+        net->optimizer_state->v_weights[i] = create_matrix(rows, cols);
+        net->optimizer_state->m_biases[i] = create_matrix(1, cols);
+        net->optimizer_state->v_biases[i] = create_matrix(1, cols);
+        if (!net->optimizer_state->m_weights[i] || !net->optimizer_state->v_weights[i] || !net->optimizer_state->m_biases[i] || !net->optimizer_state->v_biases[i]) {
+            nn_free(net); // This will handle partial allocation
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void nn_free(NeuralNetwork* net) {
     if (net == NULL) {
         return;
@@ -142,21 +178,24 @@ void nn_free(NeuralNetwork* net) {
         for (int i = 0; i < num_weight_sets; i++) free_matrix(net->biases[i]);
         free(net->biases);
     }
-    if (net->m_weights) {
-        for (int i = 0; i < num_weight_sets; i++) free_matrix(net->m_weights[i]);
-        free(net->m_weights);
-    }
-    if (net->v_weights) {
-        for (int i = 0; i < num_weight_sets; i++) free_matrix(net->v_weights[i]);
-        free(net->v_weights);
-    }
-    if (net->m_biases) {
-        for (int i = 0; i < num_weight_sets; i++) free_matrix(net->m_biases[i]);
-        free(net->m_biases);
-    }
-    if (net->v_biases) {
-        for (int i = 0; i < num_weight_sets; i++) free_matrix(net->v_biases[i]);
-        free(net->v_biases);
+    if (net->optimizer_state) {
+        if (net->optimizer_state->m_weights) {
+            for (int i = 0; i < num_weight_sets; i++) free_matrix(net->optimizer_state->m_weights[i]);
+            free(net->optimizer_state->m_weights);
+        }
+        if (net->optimizer_state->v_weights) {
+            for (int i = 0; i < num_weight_sets; i++) free_matrix(net->optimizer_state->v_weights[i]);
+            free(net->optimizer_state->v_weights);
+        }
+        if (net->optimizer_state->m_biases) {
+            for (int i = 0; i < num_weight_sets; i++) free_matrix(net->optimizer_state->m_biases[i]);
+            free(net->optimizer_state->m_biases);
+        }
+        if (net->optimizer_state->v_biases) {
+            for (int i = 0; i < num_weight_sets; i++) free_matrix(net->optimizer_state->v_biases[i]);
+            free(net->optimizer_state->v_biases);
+        }
+        free(net->optimizer_state);
     }
     free(net);
 }
@@ -208,15 +247,29 @@ NeuralNetwork* nn_clone(const NeuralNetwork* src_net) {
     if (!new_net) return NULL; // nn_create sets the error
 
     for (int i = 0; i < src_net->num_layers - 1; i++) {
-        for (int r = 0; r < src_net->weights[i]->rows; r++) {
-            for (int c = 0; c < src_net->weights[i]->cols; c++) {
-                new_net->weights[i]->data[r][c] = src_net->weights[i]->data[r][c];
-            }
-        }
-        for (int c = 0; c < src_net->biases[i]->cols; c++) {
-            new_net->biases[i]->data[0][c] = src_net->biases[i]->data[0][c];
+        // Copy weights and biases
+        free_matrix(new_net->weights[i]);
+        new_net->weights[i] = matrix_copy(src_net->weights[i]);
+        free_matrix(new_net->biases[i]);
+        new_net->biases[i] = matrix_copy(src_net->biases[i]);
+        if (!new_net->weights[i] || !new_net->biases[i]) {
+            nn_free(new_net);
+            return NULL;
         }
     }
+
+    // Clone optimizer state if it exists
+    if (src_net->optimizer_state) {
+        if (nn_init_optimizer_state(new_net)) {
+            for (int i = 0; i < src_net->num_layers - 1; i++) {
+                matrix_copy_data(new_net->optimizer_state->m_weights[i], src_net->optimizer_state->m_weights[i]);
+                matrix_copy_data(new_net->optimizer_state->v_weights[i], src_net->optimizer_state->v_weights[i]);
+                matrix_copy_data(new_net->optimizer_state->m_biases[i], src_net->optimizer_state->m_biases[i]);
+                matrix_copy_data(new_net->optimizer_state->v_biases[i], src_net->optimizer_state->v_biases[i]);
+            }
+        }
+    }
+
     gann_set_error(GANN_SUCCESS);
     return new_net;
 }

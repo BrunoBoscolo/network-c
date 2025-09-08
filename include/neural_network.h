@@ -22,12 +22,17 @@ typedef struct {
     ActivationType activation_hidden; // Activation for hidden layers
     ActivationType activation_output; // Activation for output layer
 
-    // Optimizer state
-    Matrix** m_weights; // First moment for weights (Adam)
-    Matrix** v_weights; // Second moment for weights (Adam, RMSprop)
-    Matrix** m_biases;  // First moment for biases (Adam)
-    Matrix** v_biases;  // Second moment for biases (Adam, RMSprop)
+    // Optimizer state - only allocated for backprop training
+    struct OptimizerState* optimizer_state;
 } NeuralNetwork;
+
+// Represents the state for optimizers like Adam and RMSprop
+typedef struct OptimizerState {
+    Matrix** m_weights; // First moment for weights
+    Matrix** v_weights; // Second moment for weights
+    Matrix** m_biases;  // First moment for biases
+    Matrix** v_biases;  // Second moment for biases
+} OptimizerState;
 
 /**
  * @brief Applies an activation function element-wise to a matrix.
@@ -57,6 +62,14 @@ void nn_apply_activation_derivative(Matrix* m, ActivationType activation_type);
  * @return A pointer to the newly created NeuralNetwork, or NULL on failure.
  */
 NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output);
+
+/**
+ * @brief Initializes the optimizer state for a neural network. This is only needed
+ * for training with backpropagation.
+ * @param net The neural network for which to initialize the optimizer state.
+ * @return 1 on success, 0 on failure.
+ */
+int nn_init_optimizer_state(NeuralNetwork* net);
 
 /**
  * @brief Frees all memory allocated for a neural network, including its weights and biases.

@@ -24,7 +24,14 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
     // 2. Initialize weights and biases
     nn_init(net);
 
-    // 3. Start the training process
+    // 3. Initialize optimizer state
+    if (!nn_init_optimizer_state(net)) {
+        fprintf(stderr, "Failed to initialize optimizer state.\n");
+        nn_free(net);
+        return NULL;
+    }
+
+    // 4. Start the training process
     printf("Training with parameters:\n");
     printf("  Learning Rate: %f\n", params->learning_rate);
     printf("  Epochs: %d\n", params->epochs);

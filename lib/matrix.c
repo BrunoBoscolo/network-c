@@ -2,6 +2,7 @@
 #include "gann_errors.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // --- Matrix Operations Implementation ---
 
@@ -92,6 +93,15 @@ Matrix* dot_product(const Matrix* m1, const Matrix* m2) {
         }
     }
     return result;
+}
+
+void matrix_copy_data(Matrix* dest, const Matrix* src) {
+    if (dest == NULL || src == NULL || dest->rows != src->rows || dest->cols != src->cols) {
+        return;
+    }
+    for (int i = 0; i < src->rows; i++) {
+        memcpy(dest->data[i], src->data[i], src->cols * sizeof(double));
+    }
 }
 
 // Adds a bias vector to each row of a matrix

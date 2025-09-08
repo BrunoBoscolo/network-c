@@ -46,6 +46,7 @@ typedef struct {
     int fitness_samples;            /**< The number of samples from the dataset to use for fitness evaluation in each generation. Use 0 for the full dataset. */
     SelectionType selection_type;   /**< The method for selecting the fittest individuals (e.g., ELITE, TOURNAMENT). */
     int tournament_size;            /**< The number of individuals to compete in a tournament, if tournament selection is used. */
+    int elitism_count;              /**< The number of top individuals to carry over to the next generation directly. */
     ActivationType activation_hidden; /**< The activation function to use for the hidden layers. */
     ActivationType activation_output; /**< The activation function to use for the output layer. */
     CrossoverType crossover_type;   /**< The crossover strategy to use. */

@@ -32,34 +32,35 @@ void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** 
 }
 
 void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
-    if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
+    if (net == NULL || !net->optimizer_state || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
     double lr = params->learning_rate;
     double beta2 = params->beta2;
     double epsilon = params->epsilon;
+    OptimizerState* opt_state = net->optimizer_state;
 
     for (int l = 0; l < net->num_layers - 1; l++) {
         // Update weights
         for (int r = 0; r < net->weights[l]->rows; r++) {
             for (int c = 0; c < net->weights[l]->cols; c++) {
                 double grad = weight_gradients[l]->data[r][c] / batch_size;
-                net->v_weights[l]->data[r][c] = beta2 * net->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
-                net->weights[l]->data[r][c] -= (lr / (sqrt(net->v_weights[l]->data[r][c]) + epsilon)) * grad;
+                opt_state->v_weights[l]->data[r][c] = beta2 * opt_state->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
+                net->weights[l]->data[r][c] -= (lr / (sqrt(opt_state->v_weights[l]->data[r][c]) + epsilon)) * grad;
             }
         }
         // Update biases
         for (int c = 0; c < net->biases[l]->cols; c++) {
             double grad = bias_gradients[l]->data[0][c] / batch_size;
-            net->v_biases[l]->data[0][c] = beta2 * net->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
-            net->biases[l]->data[0][c] -= (lr / (sqrt(net->v_biases[l]->data[0][c]) + epsilon)) * grad;
+            opt_state->v_biases[l]->data[0][c] = beta2 * opt_state->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
+            net->biases[l]->data[0][c] -= (lr / (sqrt(opt_state->v_biases[l]->data[0][c]) + epsilon)) * grad;
         }
     }
 }
 
 void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t) {
-    if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
+    if (net == NULL || !net->optimizer_state || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
@@ -67,6 +68,7 @@ void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix**
     double beta1 = params->beta1;
     double beta2 = params->beta2;
     double epsilon = params->epsilon;
+    OptimizerState* opt_state = net->optimizer_state;
 
     for (int l = 0; l < net->num_layers - 1; l++) {
         // Update weights
@@ -74,11 +76,11 @@ void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix**
             for (int c = 0; c < net->weights[l]->cols; c++) {
                 double grad = weight_gradients[l]->data[r][c] / batch_size;
                 // Update moments
-                net->m_weights[l]->data[r][c] = beta1 * net->m_weights[l]->data[r][c] + (1 - beta1) * grad;
-                net->v_weights[l]->data[r][c] = beta2 * net->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
+                opt_state->m_weights[l]->data[r][c] = beta1 * opt_state->m_weights[l]->data[r][c] + (1 - beta1) * grad;
+                opt_state->v_weights[l]->data[r][c] = beta2 * opt_state->v_weights[l]->data[r][c] + (1 - beta2) * (grad * grad);
                 // Bias correction
-                double m_hat = net->m_weights[l]->data[r][c] / (1 - pow(beta1, t));
-                double v_hat = net->v_weights[l]->data[r][c] / (1 - pow(beta2, t));
+                double m_hat = opt_state->m_weights[l]->data[r][c] / (1 - pow(beta1, t));
+                double v_hat = opt_state->v_weights[l]->data[r][c] / (1 - pow(beta2, t));
                 // Update weights
                 net->weights[l]->data[r][c] -= (lr * m_hat) / (sqrt(v_hat) + epsilon);
             }
@@ -87,11 +89,11 @@ void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix**
         for (int c = 0; c < net->biases[l]->cols; c++) {
             double grad = bias_gradients[l]->data[0][c] / batch_size;
             // Update moments
-            net->m_biases[l]->data[0][c] = beta1 * net->m_biases[l]->data[0][c] + (1 - beta1) * grad;
-            net->v_biases[l]->data[0][c] = beta2 * net->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
+            opt_state->m_biases[l]->data[0][c] = beta1 * opt_state->m_biases[l]->data[0][c] + (1 - beta1) * grad;
+            opt_state->v_biases[l]->data[0][c] = beta2 * opt_state->v_biases[l]->data[0][c] + (1 - beta2) * (grad * grad);
             // Bias correction
-            double m_hat = net->m_biases[l]->data[0][c] / (1 - pow(beta1, t));
-            double v_hat = net->v_biases[l]->data[0][c] / (1 - pow(beta2, t));
+            double m_hat = opt_state->m_biases[l]->data[0][c] / (1 - pow(beta1, t));
+            double v_hat = opt_state->v_biases[l]->data[0][c] / (1 - pow(beta2, t));
             // Update biases
             net->biases[l]->data[0][c] -= (lr * m_hat) / (sqrt(v_hat) + epsilon);
         }

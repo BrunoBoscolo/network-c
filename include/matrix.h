@@ -108,5 +108,12 @@ Matrix* matrix_copy(const Matrix* m);
  */
 Matrix* matrix_get_row(const Matrix* m, int row);
 
+/**
+ * @brief Copies the data from one matrix to another, assuming dimensions match.
+ * @param dest The destination matrix.
+ * @param src The source matrix.
+ */
+void matrix_copy_data(Matrix* dest, const Matrix* src);
+
 
 #endif // MATRIX_H

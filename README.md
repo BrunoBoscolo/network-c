@@ -12,6 +12,7 @@ This project is a C implementation of a simple feedforward neural network that c
 - **Modular Architecture**: The code is organized into separate modules for the neural network, training algorithms, data loading, and matrix operations.
 - **Build and Test with Make**: A `Makefile` is provided for easy building and testing of the project.
 - **Network Persistence**: The trained network can be saved to a file and loaded later for evaluation.
+- **Reproducible Results**: The random number generator can be seeded to ensure that training is deterministic.
 
 ## Architecture
 The project's source code is located in the `lib/` directory and is organized into four main components:
@@ -69,6 +70,25 @@ make test
 ## How It Works
 
 A high-level API is provided in `gann.h` to make training easy. You only need to load your data, define the parameters, and call one of the training functions.
+
+### Reproducibility
+For debugging or scientific experiments, it's important to have reproducible results. This library uses a pseudo-random number generator for initializing network weights and for some genetic operators. To ensure that you get the same "random" results every time you run the program, you can seed the generator.
+
+To do this, call the `gann_seed_rng` function at the beginning of your `main` function:
+```c
+#include "gann.h"
+#include <time.h>
+
+int main() {
+    // Use a fixed seed for deterministic results
+    gann_seed_rng(12345);
+
+    // To get different results on each run, you can use the current time as a seed
+    // gann_seed_rng(time(NULL));
+
+    // ... your code here ...
+}
+```
 
 ### Neural Network
 The neural network is a simple feedforward network. It takes a flattened 28x28 (784-pixel) image as input and passes it through a series of layers. The output layer has 10 neurons, one for each digit (0-9). The neuron with the highest activation is the network's guess.

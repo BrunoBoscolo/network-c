@@ -81,6 +81,11 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
 
 // --- High-Level API Implementation ---
 
+void gann_seed_rng(unsigned int seed) {
+    srand(seed);
+    gann_set_error(GANN_SUCCESS);
+}
+
 GannTrainParams gann_create_default_params(void) {
     GannTrainParams params = {
         .architecture = NULL,

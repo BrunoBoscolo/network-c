@@ -21,6 +21,16 @@
 // --- High-Level "Easy" API ---
 
 /**
+ * @brief Seeds the random number generator used by the library.
+ *
+ * Call this function once at the beginning of your program to ensure
+ * reproducible results from the training process.
+ *
+ * @param seed The seed for the random number generator.
+ */
+void gann_seed_rng(unsigned int seed);
+
+/**
  * @brief Parameters for the gann_train function.
  *
  * This struct holds all the parameters needed to configure the training process

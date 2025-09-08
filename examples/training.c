@@ -4,8 +4,11 @@
 #include "gann.h"
 
 int main() {
-    // Seed the random number generator
-    srand(time(NULL));
+    // Seed the random number generator.
+    // Using a fixed seed (e.g., 12345) makes the training process deterministic,
+    // which is useful for debugging and for comparing different training runs.
+    // To get different results on each run, you could use: gann_seed_rng(time(NULL));
+    gann_seed_rng(12345);
 
     printf("--- Starting MNIST Training with the GANN Simple API ---\n");
 

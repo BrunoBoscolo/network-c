@@ -13,7 +13,7 @@
 
 void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
     if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
-        fprintf(stderr, "Error: Cannot update weights (SGD). Provided arguments are NULL.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
     double lr_batch = params->learning_rate / batch_size;
@@ -33,7 +33,7 @@ void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** 
 
 void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size) {
     if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
-        fprintf(stderr, "Error: Cannot update weights (RMSprop). Provided arguments are NULL.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
     double lr = params->learning_rate;
@@ -60,7 +60,7 @@ void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matri
 
 void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t) {
     if (net == NULL || weight_gradients == NULL || bias_gradients == NULL || params == NULL) {
-        fprintf(stderr, "Error: Cannot update weights (Adam). Provided arguments are NULL.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
     double lr = params->learning_rate;
@@ -99,10 +99,53 @@ void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix**
 }
 
 
+// --- Utility function to calculate Mean Squared Error ---
+double calculate_mse(const NeuralNetwork* net, const Dataset* dataset) {
+    if (net == NULL || dataset == NULL || dataset->num_items == 0) {
+        return -1.0; // Indicate error
+    }
+
+    double total_mse = 0.0;
+    for (int i = 0; i < dataset->num_items; i++) {
+        Matrix* input = matrix_get_row(dataset->images, i);
+        Matrix* target = matrix_get_row(dataset->labels, i);
+        Matrix* output = nn_forward_pass(net, input);
+
+        if (output == NULL || target == NULL) {
+            if(input) free_matrix(input);
+            if(target) free_matrix(target);
+            if(output) free_matrix(output);
+            continue; // Skip if there was an error
+        }
+
+        Matrix* error = matrix_subtract(output, target);
+        if (error == NULL) {
+            free_matrix(input);
+            free_matrix(target);
+            free_matrix(output);
+            if(error) free_matrix(error);
+            continue;
+        }
+
+        double mse = 0.0;
+        for (int j = 0; j < error->cols; j++) {
+            mse += error->data[0][j] * error->data[0][j];
+        }
+        total_mse += mse / error->cols;
+
+        free_matrix(input);
+        free_matrix(target);
+        free_matrix(output);
+        free_matrix(error);
+    }
+
+    return total_mse / dataset->num_items;
+}
+
 // Main function to train the network using backpropagation
 void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params) {
     if (net == NULL || train_dataset == NULL || params == NULL) {
-        fprintf(stderr, "Error: Cannot backpropagate. Provided network, dataset or params is NULL.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
     int t = 0; // Timestep for Adam
@@ -228,7 +271,8 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
             free(bias_gradients);
         }
         if (params->logging) {
-            printf("Epoch %d/%d completed.\n", epoch + 1, params->epochs);
+            double mse = calculate_mse(net, train_dataset);
+            printf("Epoch %d/%d, MSE: %f\n", epoch + 1, params->epochs, mse);
         }
     }
 }

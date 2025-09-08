@@ -10,10 +10,13 @@ int main() {
     printf("--- Starting MNIST Training with the GANN Simple API ---\n");
 
     // --- 1. Load MNIST Data ---
+    // The data loader is not part of the core GANN library, so it doesn't use the new error system.
+    // We will check for errors in the traditional C way (checking for NULL).
     Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte",
                                                 "data/train-labels.idx1-ubyte");
     if (!train_dataset) {
-        fprintf(stderr, "Failed to load training data.\n");
+        // Since data_loader doesn't use gann_errors, we print a generic message.
+        fprintf(stderr, "Error: Failed to load training data. Check file paths and integrity.\n");
         return 1;
     }
 
@@ -44,26 +47,26 @@ int main() {
 
 
     // --- 3. Run Training ---
-    // This single function call encapsulates the entire genetic algorithm process:
-    // - Creates an initial population of random neural networks.
-    // - For each generation:
-    //   - Evaluates the fitness of each network.
-    //   - Selects the best networks to be parents.
-    //   - Creates a new generation through crossover and mutation.
-    // - Returns the best network found after all generations are complete.
+    // This single function call encapsulates the entire genetic algorithm process.
+    printf("--------------------\n");
+    printf("Starting training...\n");
     NeuralNetwork* best_net = gann_train(&params, train_dataset);
 
-    // --- 4. Save the Best Network ---
+    // --- 4. Check for errors and Save the Best Network ---
     if (best_net) {
-        printf("--------------------\n");
+        printf("Training complete.\n");
         if (nn_save(best_net, "trained_network.dat")) {
             printf("Best network saved to trained_network.dat\n");
         } else {
-            fprintf(stderr, "Failed to save the best network.\n");
+            // If saving fails, get the specific error from the GANN library.
+            GannError err = gann_get_last_error();
+            fprintf(stderr, "Error: Failed to save the best network. Reason: %s\n", gann_error_to_string(err));
         }
         nn_free(best_net);
     } else {
-        fprintf(stderr, "Training failed to produce a network.\n");
+        // If training fails, get the specific error from the GANN library.
+        GannError err = gann_get_last_error();
+        fprintf(stderr, "Error: Training failed. Reason: %s\n", gann_error_to_string(err));
     }
 
     // --- 5. Cleanup ---

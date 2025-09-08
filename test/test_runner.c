@@ -8,14 +8,17 @@ const char* all_suites() {
     // Run tests from test_matrix.c
     mu_run_test(test_matrix_creation);
     mu_run_test(test_matrix_dot_product);
+    mu_run_test(test_matrix_errors);
 
     // Run tests from test_neural_network.c
     mu_run_test(test_nn_creation);
     mu_run_test(test_nn_forward_pass);
     mu_run_test(test_gaussian_mutation);
+    mu_run_test(test_nn_errors);
 
     // Run tests from test_persistence.c
     mu_run_test(test_save_and_load_network);
+    mu_run_test(test_persistence_errors);
 
     // Run tests from test_evolution.c
     mu_run_test(test_crossover);

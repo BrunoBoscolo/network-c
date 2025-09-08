@@ -1,5 +1,6 @@
 #include "minunit.h"
 #include "neural_network.h"
+#include "gann_errors.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -16,9 +17,12 @@ const char* test_save_and_load_network() {
     const char* filepath = "test_network.dat";
     int result = nn_save(original_net, filepath);
     mu_assert("Failed to save network", result == 1);
+    mu_assert("nn_save should set GANN_SUCCESS", gann_get_last_error() == GANN_SUCCESS);
 
     NeuralNetwork* loaded_net = nn_load(filepath);
     mu_assert("Failed to load network", loaded_net != NULL);
+    mu_assert("nn_load should set GANN_SUCCESS", gann_get_last_error() == GANN_SUCCESS);
+
 
     // Compare architecture
     mu_assert("Loaded network has wrong number of layers", original_net->num_layers == loaded_net->num_layers);
@@ -43,6 +47,42 @@ const char* test_save_and_load_network() {
     nn_free(original_net);
     nn_free(loaded_net);
     remove(filepath);
+
+    return NULL;
+}
+
+// Test for persistence error handling
+const char* test_persistence_errors() {
+    // Test nn_load with a non-existent file
+    NeuralNetwork* net = nn_load("non_existent_file.dat");
+    mu_assert("nn_load should fail for non-existent file", net == NULL);
+    mu_assert("nn_load should set GANN_ERROR_FILE_OPEN", gann_get_last_error() == GANN_ERROR_FILE_OPEN);
+
+    // Test nn_save with a NULL network
+    int result = nn_save(NULL, "test_save_null.dat");
+    mu_assert("nn_save should fail for NULL network", result == 0);
+    mu_assert("nn_save should set GANN_ERROR_NULL_ARGUMENT", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
+
+    // Test nn_save to an invalid path
+    int arch[] = {1, 1};
+    net = nn_create(2, arch, SIGMOID, SIGMOID);
+    // This will fail on most systems as you can't create a file with the name of a directory that exists.
+    result = nn_save(net, ".");
+    mu_assert("nn_save should fail for invalid path", result == 0);
+    mu_assert("nn_save should set GANN_ERROR_FILE_OPEN", gann_get_last_error() == GANN_ERROR_FILE_OPEN);
+    nn_free(net);
+
+    // Test loading from a corrupted/invalid file
+    FILE* f = fopen("corrupted.dat", "w");
+    if (f) {
+        fprintf(f, "this is not a valid network file");
+        fclose(f);
+        net = nn_load("corrupted.dat");
+        mu_assert("nn_load should fail for corrupted file", net == NULL);
+        GannError err = gann_get_last_error();
+        mu_assert("nn_load should set an error for corrupted file", err == GANN_ERROR_FILE_READ || err == GANN_ERROR_INVALID_FILE_FORMAT);
+        remove("corrupted.dat");
+    }
 
     return NULL;
 }

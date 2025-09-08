@@ -13,7 +13,7 @@ int main() {
     Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte",
                                                 "data/train-labels.idx1-ubyte");
     if (!train_dataset) {
-        fprintf(stderr, "Failed to load training data.\n");
+        fprintf(stderr, "Error: Failed to load training data. Check file paths and integrity.\n");
         return 1;
     }
 
@@ -41,19 +41,23 @@ int main() {
     printf("]\n");
 
     // --- 3. Run Training ---
+    printf("--------------------\n");
+    printf("Starting training...\n");
     NeuralNetwork* net = gann_train_with_backprop(&params, train_dataset);
 
-    // --- 4. Save the Network ---
+    // --- 4. Check for errors and Save the Network ---
     if (net) {
-        printf("--------------------\n");
+        printf("Training complete.\n");
         if (nn_save(net, "trained_network_backprop.dat")) {
             printf("Trained network saved to trained_network_backprop.dat\n");
         } else {
-            fprintf(stderr, "Failed to save the network.\n");
+            GannError err = gann_get_last_error();
+            fprintf(stderr, "Error: Failed to save the network. Reason: %s\n", gann_error_to_string(err));
         }
         nn_free(net);
     } else {
-        fprintf(stderr, "Training failed to produce a network.\n");
+        GannError err = gann_get_last_error();
+        fprintf(stderr, "Error: Training failed. Reason: %s\n", gann_error_to_string(err));
     }
 
     // --- 5. Cleanup ---

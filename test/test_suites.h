@@ -4,14 +4,17 @@
 // test_matrix.c
 const char* test_matrix_creation();
 const char* test_matrix_dot_product();
+const char* test_matrix_errors();
 
 // test_neural_network.c
 const char* test_nn_creation();
 const char* test_nn_forward_pass();
 const char* test_gaussian_mutation();
+const char* test_nn_errors();
 
 // test_persistence.c
 const char* test_save_and_load_network();
+const char* test_persistence_errors();
 
 // test_evolution.c
 const char* test_crossover();

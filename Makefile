@@ -5,7 +5,7 @@ LDFLAGS = -lm
 
 # --- Library ---
 LIB_NAME = gann
-LIB_SRCS = lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c
+LIB_SRCS = lib/gann_errors.c lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c
 LIB_OBJS = $(LIB_SRCS:.c=.o)
 STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so

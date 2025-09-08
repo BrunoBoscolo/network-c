@@ -1,6 +1,7 @@
 #include "minunit.h"
 #include "neural_network.h"
 #include "mutation.h"
+#include "gann_errors.h"
 #include <math.h>
 
 extern const double TEST_EPSILON;
@@ -9,9 +10,12 @@ extern const double TEST_EPSILON;
 const char* test_nn_creation() {
     int architecture[] = {2, 2, 1};
     NeuralNetwork* net = nn_create(3, architecture, SIGMOID, SIGMOID);
-    nn_init(net);
+    mu_assert("nn_create should not return NULL on success", net != NULL);
+    mu_assert("nn_create should set GANN_SUCCESS on success", gann_get_last_error() == GANN_SUCCESS);
 
-    mu_assert("NN creation failed", net != NULL);
+    nn_init(net);
+    mu_assert("nn_init should set GANN_SUCCESS on success", gann_get_last_error() == GANN_SUCCESS);
+
     mu_assert("NN num_layers is wrong", net->num_layers == 3);
     mu_assert("NN architecture[0] is wrong", net->architecture[0] == 2);
     mu_assert("NN architecture[1] is wrong", net->architecture[1] == 2);
@@ -73,6 +77,7 @@ const char* test_nn_forward_pass() {
 
     Matrix* output = nn_forward_pass(net, input);
     mu_assert("Forward pass returned NULL", output != NULL);
+    mu_assert("nn_forward_pass should set GANN_SUCCESS on success", gann_get_last_error() == GANN_SUCCESS);
 
     double actual_output = output->data[0][0];
     mu_assert("Forward pass calculation is incorrect", fabs(actual_output - expected_output) < 1e-4);
@@ -80,6 +85,44 @@ const char* test_nn_forward_pass() {
     nn_free(net);
     free_matrix(input);
     free_matrix(output);
+
+    return NULL;
+}
+
+// Test for neural network error handling
+const char* test_nn_errors() {
+    // Test nn_create with invalid architecture
+    NeuralNetwork* net = nn_create(1, (int[]){2}, SIGMOID, SIGMOID);
+    mu_assert("nn_create should fail for < 2 layers", net == NULL);
+    mu_assert("nn_create should set GANN_ERROR_INVALID_ARCHITECTURE", gann_get_last_error() == GANN_ERROR_INVALID_ARCHITECTURE);
+
+    // Test nn_create with NULL architecture
+    net = nn_create(3, NULL, SIGMOID, SIGMOID);
+    mu_assert("nn_create should fail for NULL architecture", net == NULL);
+    mu_assert("nn_create should set GANN_ERROR_NULL_ARGUMENT", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
+
+    // Test nn_forward_pass with NULL net
+    Matrix* input = create_matrix(1, 2);
+    Matrix* output = nn_forward_pass(NULL, input);
+    mu_assert("nn_forward_pass should fail for NULL net", output == NULL);
+    mu_assert("nn_forward_pass should set GANN_ERROR_NULL_ARGUMENT for NULL net", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
+
+    // Test nn_forward_pass with mismatched dimensions
+    int arch[] = {2, 1};
+    net = nn_create(2, arch, SIGMOID, SIGMOID);
+    Matrix* wrong_input = create_matrix(1, 3);
+    output = nn_forward_pass(net, wrong_input);
+    mu_assert("nn_forward_pass should fail for mismatched input dimensions", output == NULL);
+    mu_assert("nn_forward_pass should set GANN_ERROR_INVALID_DIMENSIONS", gann_get_last_error() == GANN_ERROR_INVALID_DIMENSIONS);
+
+    free_matrix(input);
+    free_matrix(wrong_input);
+    nn_free(net);
+
+    // Test nn_clone with NULL net
+    NeuralNetwork* clone = nn_clone(NULL);
+    mu_assert("nn_clone should fail for NULL net", clone == NULL);
+    mu_assert("nn_clone should set GANN_ERROR_NULL_ARGUMENT for NULL net", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
 
     return NULL;
 }

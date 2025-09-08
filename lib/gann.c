@@ -2,6 +2,7 @@
 #include "selection.h"
 #include "crossover.h"
 #include "mutation.h"
+#include "gann_errors.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,10 @@
 
 // Helper to get the index of the max value in a matrix row (the prediction)
 static int get_predicted_class(const Matrix* output) {
+    if (!output || !output->data || output->cols == 0) {
+        gann_set_error(GANN_ERROR_INVALID_PARAM);
+        return -1;
+    }
     int max_index = 0;
     for (int i = 1; i < output->cols; i++) {
         if (output->data[0][i] > output->data[0][max_index]) {
@@ -23,6 +28,7 @@ static int get_predicted_class(const Matrix* output) {
 
 // Helper to get the true class from a one-hot encoded label vector
 static int get_true_class(const double* label_row, int num_classes) {
+    if (!label_row) return -1;
     for (int i = 0; i < num_classes; i++) {
         if (label_row[i] == 1.0) {
             return i;
@@ -42,8 +48,9 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
     // Create a single input matrix to be reused to avoid repeated malloc/free calls.
     Matrix* input = create_matrix(1, dataset->images->cols);
     if (!input) {
-        fprintf(stderr, "Error: Failed to create input matrix for fitness calculation.\n");
-        return 0.0; // Cannot calculate fitness
+        // create_matrix sets the error, but this is a private helper.
+        // We don't propagate the error code here, just return 0 fitness.
+        return 0.0;
     }
 
     for (int i = 0; i < num_samples; i++) {
@@ -52,7 +59,8 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
 
         Matrix* output = nn_forward_pass(network, input);
         if (!output) {
-            continue; // Skip this sample if forward pass fails
+            // nn_forward_pass sets the error, so we can just skip.
+            continue;
         }
 
         int predicted_class = get_predicted_class(output);
@@ -91,34 +99,40 @@ GannTrainParams gann_create_default_params(void) {
         .mutation_std_dev = 0.1,
         .logging = true
     };
+    gann_set_error(GANN_SUCCESS);
     return params;
 }
 
 NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset) {
     const GannTrainParams* base_params = &params->base_params;
 
-    if (!base_params || !train_dataset || !base_params->architecture || base_params->num_layers < 2 ||
-        base_params->population_size <= 0 || base_params->num_generations <= 0 ||
+    if (!base_params || !train_dataset || !base_params->architecture) {
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
+        return NULL;
+    }
+    if (base_params->num_layers < 2 || base_params->population_size <= 0 || base_params->num_generations <= 0 ||
         base_params->mutation_rate < 0.0f || base_params->mutation_chance < 0.0f || base_params->mutation_chance > 1.0f) {
-        fprintf(stderr, "Error: Invalid parameters for gann_evolve.\n");
+        gann_set_error(GANN_ERROR_INVALID_PARAM);
         return NULL;
     }
 
     // --- 1. Create Initial Population ---
     NeuralNetwork** population = evo_create_initial_population(base_params->population_size, base_params->num_layers, base_params->architecture, base_params->activation_hidden, base_params->activation_output);
     if (!population) {
-        fprintf(stderr, "Failed to create initial population.\n");
+        // evo_create_initial_population should set the error.
         return NULL;
     }
 
-    printf("Created initial population of %d networks.\n", base_params->population_size);
-    printf("Starting evolution for %d generations...\n", base_params->num_generations);
+    if (base_params->logging) {
+        printf("Created initial population of %d networks.\n", base_params->population_size);
+        printf("Starting evolution for %d generations...\n", base_params->num_generations);
+    }
 
     // --- 2. Run Evolutionary Loop ---
     for (int gen = 0; gen < base_params->num_generations; gen++) {
         NetworkFitness* population_with_fitness = malloc(base_params->population_size * sizeof(NetworkFitness));
         if (!population_with_fitness) {
-             fprintf(stderr, "Failed to allocate memory for population fitness.\n");
+             gann_set_error(GANN_ERROR_ALLOC_FAILED);
              break; // Exit loop
         }
 
@@ -179,10 +193,16 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
             // We need to clone the best network, because the population will be freed.
             if (best_net) nn_free(best_net);
             best_net = nn_clone(population[i]);
+            if (!best_net) {
+                // nn_clone failed and set the error. We can't continue.
+                break;
+            }
         }
     }
 
-    printf("Evolution finished. Best accuracy: %.2f%%\n", best_overall_accuracy * 100.0);
+    if (base_params->logging) {
+        printf("Evolution finished. Best accuracy: %.2f%%\n", best_overall_accuracy * 100.0);
+    }
 
     // --- 4. Cleanup ---
     for (int i = 0; i < base_params->population_size; i++) {
@@ -190,10 +210,18 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
     }
     free(population);
 
-    return best_net; // Caller is responsible for freeing this network
+    if (best_net) {
+        gann_set_error(GANN_SUCCESS);
+    }
+    // If best_net is NULL, an error has already been set.
+    return best_net;
 }
 
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
+    if (!params) {
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
+        return NULL;
+    }
     GannEvolveParams evolve_params = {
         .base_params = *params,
         .selection_func = select_fittest,
@@ -205,14 +233,15 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
 
 int gann_predict(const NeuralNetwork* net, const double* input_data) {
     if (!net || !input_data) {
-        fprintf(stderr, "Error: Invalid input to gann_predict.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return -1; // Invalid input
     }
 
     // Create a matrix for the input data
     Matrix* input_matrix = create_matrix(1, net->architecture[0]);
     if (!input_matrix) {
-        return -1; // Memory allocation failed
+        // create_matrix sets the error
+        return -1;
     }
     memcpy(input_matrix->data[0], input_data, net->architecture[0] * sizeof(double));
 
@@ -220,7 +249,8 @@ int gann_predict(const NeuralNetwork* net, const double* input_data) {
     Matrix* output_matrix = nn_forward_pass(net, input_matrix);
     if (!output_matrix) {
         free_matrix(input_matrix);
-        return -1; // Forward pass failed
+        // nn_forward_pass sets the error
+        return -1;
     }
 
     // Get the result
@@ -230,18 +260,24 @@ int gann_predict(const NeuralNetwork* net, const double* input_data) {
     free_matrix(input_matrix);
     free_matrix(output_matrix);
 
+    gann_set_error(GANN_SUCCESS);
     return prediction;
 }
 
 double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset) {
     if (!net || !dataset) {
-        fprintf(stderr, "Error: Invalid input to gann_evaluate.\n");
+        gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return 0.0;
     }
 
     int correct_predictions = 0;
     for (int i = 0; i < dataset->num_items; i++) {
         int prediction = gann_predict(net, dataset->images->data[i]);
+        if (prediction == -1) {
+            // An error occurred in gann_predict, and it has set the error code.
+            // We can't continue evaluating, so we return 0.0 accuracy.
+            return 0.0;
+        }
         int num_classes = net->architecture[net->num_layers - 1];
         int true_class = get_true_class(dataset->labels->data[i], num_classes);
 
@@ -250,5 +286,6 @@ double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset) {
         }
     }
 
+    gann_set_error(GANN_SUCCESS);
     return (double)correct_predictions / dataset->num_items;
 }

@@ -14,6 +14,7 @@
 #include "selection.h"
 #include "crossover.h"
 #include "mutation.h"
+#include "gann_errors.h" // Include the new error handling header
 #include <stdbool.h>
 
 
@@ -80,6 +81,7 @@ typedef struct {
  * @param params The evolution parameters, including function pointers to the genetic operators.
  * @param train_dataset The dataset to train on.
  * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
+ *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset);
 
@@ -92,6 +94,7 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
  * @param params The training parameters.
  * @param train_dataset The dataset to train on.
  * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
+ *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset);
 
@@ -103,6 +106,7 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
  * @param params The backpropagation training parameters.
  * @param train_dataset The dataset to train on.
  * @return A pointer to the trained NeuralNetwork. The caller is responsible for freeing this network.
+ *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset);
 
@@ -112,7 +116,8 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
  *
  * @param net The trained neural network.
  * @param input A flat array of input data (e.g., pixel values). Must match the network's input layer size.
- * @return The index of the predicted class (e.g., the digit 0-9).
+ * @return The index of the predicted class (e.g., the digit 0-9), or -1 on failure.
+ *         If -1 is returned, call `gann_get_last_error()` to get the specific error code.
  */
 int gann_predict(const NeuralNetwork* net, const double* input);
 
@@ -122,6 +127,7 @@ int gann_predict(const NeuralNetwork* net, const double* input);
  * @param net The trained neural network.
  * @param dataset The dataset to evaluate on (e.g., a test set).
  * @return The accuracy of the network on the dataset (a value from 0.0 to 1.0).
+ *         On failure, returns 0.0 and sets an error code. Call `gann_get_last_error()` to check for errors.
  */
 double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset);
 

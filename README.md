@@ -1,19 +1,20 @@
-# Neural Network Evolution in C
+# Neural Network Library in C
 
-This project is a C implementation of a simple feedforward neural network that is trained using a genetic algorithm. It is designed to solve the MNIST handwritten digit recognition problem.
+This project is a C implementation of a simple feedforward neural network that can be trained with either a genetic algorithm or backpropagation. It is designed to be a learning tool for beginners and is pre-configured to solve the MNIST handwritten digit recognition problem.
 
 ## Features
 - **Feedforward Neural Network**: A simple, fully connected neural network implementation from scratch in C.
-- **Genetic Algorithm**: The network is trained using a genetic algorithm, where a population of networks "evolves" to become better at recognizing digits.
-- **Crossover**: The genetic algorithm now uses crossover to create new networks from the fittest parents.
+- **Two Training Methods**:
+    - **Genetic Algorithm**: Evolve a population of networks to solve a problem. Includes multiple selection, crossover, and mutation methods.
+    - **Backpropagation**: Train a network with gradient descent. Includes classic optimizers like **SGD**, **Adam**, and **RMSprop**.
 - **MNIST Dataset**: The project is pre-configured to work with the MNIST dataset of handwritten digits.
 - **Configurable Activation Functions**: Supports Sigmoid, ReLU, and Leaky ReLU for hidden layers.
-- **Modular Architecture**: The code is organized into separate modules for the neural network, genetic algorithm, data loading, and matrix operations.
+- **Modular Architecture**: The code is organized into separate modules for the neural network, training algorithms, data loading, and matrix operations.
 - **Build and Test with Make**: A `Makefile` is provided for easy building and testing of the project.
 - **Network Persistence**: The trained network can be saved to a file and loaded later for evaluation.
 
 ## Architecture
-The project is divided into four main components:
+The project's source code is located in the `lib/` directory and is organized into four main components:
 - `matrix`: A general-purpose matrix library for creating and manipulating 2D matrices.
 - `neural_network`: Contains the core logic for the neural network, including network creation, forward propagation, mutation, and persistence.
 - `evolution`: Implements the genetic algorithm, including population creation, fitness evaluation, selection, crossover, and reproduction.
@@ -66,20 +67,62 @@ make test
 ```
 
 ## How It Works
-The project combines two main concepts: neural networks and genetic algorithms.
 
-A high-level API is provided in `gann.h` to make training easy. For a simple start, you can use the `gann_create_default_params()` function to get a set of sensible default training parameters, as shown in the `examples/training.c` file. You only need to provide the network architecture.
+A high-level API is provided in `gann.h` to make training easy. You only need to load your data, define the parameters, and call one of the training functions.
 
 ### Neural Network
 The neural network is a simple feedforward network. It takes a flattened 28x28 (784-pixel) image as input and passes it through a series of layers. The output layer has 10 neurons, one for each digit (0-9). The neuron with the highest activation is the network's guess.
 
-### Genetic Algorithm
-Instead of using a traditional training algorithm like backpropagation, this project uses a genetic algorithm:
+### Training Methods
+This library provides two different ways to train the neural network: a **Genetic Algorithm** and **Backpropagation**.
+
+#### 1. Genetic Algorithm
+The genetic algorithm is inspired by biological evolution. It's a great way to learn about how evolution can be used as an optimization technique.
 1.  **Initialization**: An initial population of random neural networks is created.
 2.  **Evaluation**: Each network in the population is evaluated based on its performance on the MNIST dataset. Its "fitness" is the number of digits it correctly identifies.
 3.  **Selection**: The top-performing networks (the "fittest") are selected to be "parents" for the next generation.
 4.  **Reproduction**: The selected parents are combined using crossover to create new "child" networks. These children are then slightly mutated. These new networks form the next generation.
 5.  **Repeat**: The process is repeated for many generations, and over time, the population of networks evolves to become better at recognizing digits.
+
+To train a network with the genetic algorithm, use the `gann_train` function. You can get a set of sensible default parameters by calling `gann_create_default_params()` and then override them as needed.
+
+*Example (`examples/training.c`):*
+```c
+// Define the network architecture (input, hidden, output layers)
+const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, 64, MNIST_NUM_CLASSES};
+
+// Get default training parameters
+GannTrainParams params = gann_create_default_params();
+params.architecture = ARCHITECTURE;
+params.num_layers = sizeof(ARCHITECTURE) / sizeof(int);
+
+// Start training
+NeuralNetwork* best_net = gann_train(&params, train_dataset);
+```
+
+#### 2. Backpropagation
+Backpropagation is a standard algorithm for training neural networks. It works by calculating the error (or "loss") of the network's predictions and then propagating this error backward through the network to adjust the weights and biases. This library supports three common optimization algorithms: **SGD**, **Adam**, and **RMSprop**.
+
+To train a network with backpropagation, use the `gann_train_with_backprop` function. You need to fill out the `GannBackpropParams` struct with your desired configuration.
+
+*Example (`examples/backprop_training.c`):*
+```c
+// Define the network architecture
+const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, 64, MNIST_NUM_CLASSES};
+
+// Define backpropagation parameters
+GannBackpropParams params = {
+    .architecture = ARCHITECTURE,
+    .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
+    .learning_rate = 0.001,
+    .epochs = 5,
+    .batch_size = 32,
+    .optimizer_type = ADAM, // Choose between SGD, ADAM, RMSPROP
+};
+
+// Start training
+NeuralNetwork* net = gann_train_with_backprop(&params, train_dataset);
+```
 
 ## Contributing
 Contributions are welcome. Please open an issue to discuss any changes.

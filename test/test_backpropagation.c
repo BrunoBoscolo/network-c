@@ -19,7 +19,8 @@ const char* test_backprop_overfit_single_instance() {
         .epochs = 200, // More epochs to ensure overfitting
         .batch_size = 1,
         .activation_hidden = RELU,
-        .activation_output = SIGMOID
+        .activation_output = SIGMOID,
+        .logging = false // Disable logging for tests
     };
 
     // 3. Create and train the network

@@ -3,6 +3,7 @@
 
 #include "neural_network.h"
 #include "data_loader.h"
+#include <stdbool.h>
 
 /**
  * @brief Enum for optimizer types.
@@ -28,6 +29,7 @@ typedef struct {
     double beta1;                   /**< The exponential decay rate for the first moment estimates (for Adam). */
     double beta2;                   /**< The exponential decay rate for the second-moment estimates (for Adam and RMSprop). */
     double epsilon;                 /**< A small constant for numerical stability (for Adam and RMSprop). */
+    bool logging;                   /**< Whether to print logging information during training. */
 } GannBackpropParams;
 
 

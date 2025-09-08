@@ -3,6 +3,9 @@
 #include "mutation.h"
 #include "gann_errors.h"
 #include <math.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 extern const double TEST_EPSILON;
 
@@ -91,6 +94,12 @@ const char* test_nn_forward_pass() {
 
 // Test for neural network error handling
 const char* test_nn_errors() {
+    // --- Suppress stderr for this test ---
+    int stderr_copy = dup(STDERR_FILENO);
+    int dev_null = open("/dev/null", O_WRONLY);
+    dup2(dev_null, STDERR_FILENO);
+    close(dev_null);
+
     // Test nn_create with invalid architecture
     NeuralNetwork* net = nn_create(1, (int[]){2}, SIGMOID, SIGMOID);
     mu_assert("nn_create should fail for < 2 layers", net == NULL);
@@ -123,6 +132,10 @@ const char* test_nn_errors() {
     NeuralNetwork* clone = nn_clone(NULL);
     mu_assert("nn_clone should fail for NULL net", clone == NULL);
     mu_assert("nn_clone should set GANN_ERROR_NULL_ARGUMENT for NULL net", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
+
+    // --- Restore stderr ---
+    dup2(stderr_copy, STDERR_FILENO);
+    close(stderr_copy);
 
     return NULL;
 }

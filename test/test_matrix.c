@@ -2,6 +2,9 @@
 #include "neural_network.h"
 #include "gann_errors.h"
 #include <math.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 extern const double TEST_EPSILON;
 
@@ -57,6 +60,12 @@ const char* test_matrix_dot_product() {
 
 // Test for matrix error handling
 const char* test_matrix_errors() {
+    // --- Suppress stderr for this test ---
+    int stderr_copy = dup(STDERR_FILENO);
+    int dev_null = open("/dev/null", O_WRONLY);
+    dup2(dev_null, STDERR_FILENO);
+    close(dev_null);
+
     // Test create_matrix with invalid dimensions
     Matrix* m = create_matrix(0, 3);
     mu_assert("create_matrix should fail for 0 rows", m == NULL);
@@ -94,6 +103,10 @@ const char* test_matrix_errors() {
     result = dot_product(NULL, NULL);
     mu_assert("dot_product should fail for NULL argument", result == NULL);
     mu_assert("dot_product should set GANN_ERROR_NULL_ARGUMENT for NULL", gann_get_last_error() == GANN_ERROR_NULL_ARGUMENT);
+
+    // --- Restore stderr ---
+    dup2(stderr_copy, STDERR_FILENO);
+    close(stderr_copy);
 
     return NULL;
 }

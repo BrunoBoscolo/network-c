@@ -32,7 +32,8 @@ int main() {
         // ADAM & RMSprop parameters (ignored if optimizer_type is SGD)
         .beta1 = 0.9,
         .beta2 = 0.999,
-        .epsilon = 1e-8
+        .epsilon = 1e-8,
+        .logging = true // Print epoch progress
     };
 
     printf("Network architecture: [");

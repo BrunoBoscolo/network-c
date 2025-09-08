@@ -3,6 +3,8 @@
 #include "gann_errors.h"
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 extern const double TEST_EPSILON;
 
@@ -53,6 +55,12 @@ const char* test_save_and_load_network() {
 
 // Test for persistence error handling
 const char* test_persistence_errors() {
+    // --- Suppress stderr for this test ---
+    int stderr_copy = dup(STDERR_FILENO);
+    int dev_null = open("/dev/null", O_WRONLY);
+    dup2(dev_null, STDERR_FILENO);
+    close(dev_null);
+
     // Test nn_load with a non-existent file
     NeuralNetwork* net = nn_load("non_existent_file.dat");
     mu_assert("nn_load should fail for non-existent file", net == NULL);
@@ -83,6 +91,10 @@ const char* test_persistence_errors() {
         mu_assert("nn_load should set an error for corrupted file", err == GANN_ERROR_FILE_READ || err == GANN_ERROR_INVALID_FILE_FORMAT);
         remove("corrupted.dat");
     }
+
+    // --- Restore stderr ---
+    dup2(stderr_copy, STDERR_FILENO);
+    close(stderr_copy);
 
     return NULL;
 }

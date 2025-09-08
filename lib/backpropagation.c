@@ -227,6 +227,8 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
             free(weight_gradients);
             free(bias_gradients);
         }
-        printf("Epoch %d/%d completed.\n", epoch + 1, params->epochs);
+        if (params->logging) {
+            printf("Epoch %d/%d completed.\n", epoch + 1, params->epochs);
+        }
     }
 }

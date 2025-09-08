@@ -26,15 +26,9 @@ The project is divided into four main components:
 - `make`
 
 ### Building the Project
-The project uses a `Makefile` for building.
+The project uses a `Makefile` for building. The MNIST dataset is already included in the `data/` directory.
 
-1.  **Download the MNIST dataset**:
-    A shell script is provided to download the necessary data.
-    ```bash
-    ./download_mnist.sh
-    ```
-
-2.  **Build the training and recognition applications**:
+1.  **Build the training and recognition applications**:
     ```bash
     make all
     make recognizer
@@ -73,6 +67,8 @@ make test
 
 ## How It Works
 The project combines two main concepts: neural networks and genetic algorithms.
+
+A high-level API is provided in `gann.h` to make training easy. For a simple start, you can use the `gann_create_default_params()` function to get a set of sensible default training parameters, as shown in the `examples/training.c` file. You only need to provide the network architecture.
 
 ### Neural Network
 The neural network is a simple feedforward network. It takes a flattened 28x28 (784-pixel) image as input and passes it through a series of layers. The output layer has 10 neurons, one for each digit (0-9). The neuron with the highest activation is the network's guess.

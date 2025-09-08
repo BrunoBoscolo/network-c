@@ -19,7 +19,9 @@ typedef enum {
  * @param num_fittest A pointer to an integer that will be filled with the number of fittest individuals selected.
  * @param selection_type The selection strategy to use.
  * @param tournament_size The size of the tournament, if using tournament selection.
- * @return An array of the selected fittest networks.
+ * @return A new array of the selected fittest networks. The caller is responsible for freeing this array.
+ *         The `NeuralNetwork` pointers within the returned array point to the *original* networks
+ *         and should NOT be freed separately, as they are still owned by the main population array.
  */
 NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, SelectionType selection_type, int tournament_size);
 

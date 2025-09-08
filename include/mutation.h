@@ -13,8 +13,8 @@ typedef enum {
 
 
 /**
- * @brief Mutates a neural network's weights and biases.
- * @param network The neural network to mutate.
+ * @brief Mutates a neural network's weights and biases in-place.
+ * @param network The neural network to mutate. This network is modified directly.
  * @param mutation_rate The magnitude of the mutation.
  * @param mutation_chance The chance of a mutation occurring.
  * @param mutation_type The type of mutation to perform.

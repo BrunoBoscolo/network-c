@@ -18,30 +18,39 @@ int main() {
     }
 
     // --- 2. Define Training Parameters ---
-    const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, MNIST_NUM_CLASSES};
-    GannTrainParams params = {
-        .architecture = ARCHITECTURE,
-        .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
-        .population_size = 50,
-        .num_generations = 100, // Reduced for a quicker example run
-        .mutation_rate = 0.5f,
-        .mutation_chance = 0.25f,
-        .fitness_samples = 1000,
-        .selection_type = TOURNAMENT_SELECTION,
-        .tournament_size = 4,
-        .activation_hidden = LEAKY_RELU,
-        .activation_output = SIGMOID,
-        .crossover_type = TWO_POINT_CROSSOVER,
-        .mutation_type = GAUSSIAN_MUTATION,
-        .mutation_std_dev = 0.2
-    };
+    // For this example, we will use the convenient `gann_create_default_params`
+    // function to get a struct with sensible default values.
+    GannTrainParams params = gann_create_default_params();
 
+    // The two most important parameters that MUST be set by the user are the
+    // network architecture and the number of layers.
+    const int ARCHITECTURE[] = {MNIST_IMAGE_SIZE, 128, 64, MNIST_NUM_CLASSES};
+    params.architecture = ARCHITECTURE;
+    params.num_layers = sizeof(ARCHITECTURE) / sizeof(int);
+
+    // We can also override any of the default parameters if we want to experiment.
+    // For example, let's use a different activation function for the hidden layers
+    // and run for fewer generations for a quicker example.
+    params.activation_hidden = LEAKY_RELU;
+    params.num_generations = 50; // Default is 100
+
+    // Print the final parameters to the console.
     printf("Network architecture: [");
     for (int i = 0; i < params.num_layers; i++)
         printf("%d%s", params.architecture[i], i == params.num_layers - 1 ? "" : ", ");
     printf("]\n");
+    printf("Generations: %d | Population: %d | Mutation Chance: %.2f%%\n",
+           params.num_generations, params.population_size, params.mutation_chance * 100);
+
 
     // --- 3. Run Training ---
+    // This single function call encapsulates the entire genetic algorithm process:
+    // - Creates an initial population of random neural networks.
+    // - For each generation:
+    //   - Evaluates the fitness of each network.
+    //   - Selects the best networks to be parents.
+    //   - Creates a new generation through crossover and mutation.
+    // - Returns the best network found after all generations are complete.
     NeuralNetwork* best_net = gann_train(&params, train_dataset);
 
     // --- 4. Save the Best Network ---

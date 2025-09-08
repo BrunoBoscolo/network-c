@@ -23,14 +23,16 @@ typedef struct {
  * @brief Loads the MNIST dataset from the specified IDX-formatted files.
  * @param image_path The file path to the MNIST image data.
  * @param label_path The file path to the MNIST label data.
- * @return A pointer to the loaded Dataset, or NULL on failure.
+ * @return A pointer to the loaded Dataset, or NULL on failure. The caller is
+ *         responsible for freeing this dataset using `free_dataset()`.
  */
 Dataset* load_mnist_dataset(const char* image_path, const char* label_path);
 
 /**
  * @brief Creates a dummy dataset with random values for testing purposes.
  * @param num_items The number of items (images and labels) to create in the dataset.
- * @return A pointer to the created Dataset.
+ * @return A pointer to the created Dataset. The caller is responsible for
+ *         freeing this dataset using `free_dataset()`.
  */
 Dataset* create_dummy_dataset(int num_items);
 

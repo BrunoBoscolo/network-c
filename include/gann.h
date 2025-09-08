@@ -43,6 +43,17 @@ typedef struct {
     bool logging;                   /**< Whether to print logging information during training. */
 } GannTrainParams;
 
+/**
+ * @brief Creates a `GannTrainParams` struct with sensible default values.
+ *
+ * This function is a convenient way to get started with training without having
+ * to manually set every parameter. The user must still set the `architecture`
+ * and `num_layers` fields.
+ *
+ * @return A `GannTrainParams` struct with default values.
+ */
+GannTrainParams gann_create_default_params(void);
+
 
 // --- Function Pointer Typedefs for Extensibility ---
 typedef NetworkFitness* (*SelectionFunction)(NetworkFitness*, int, int*, SelectionType, int);

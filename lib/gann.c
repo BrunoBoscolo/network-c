@@ -73,6 +73,27 @@ static double calculate_fitness(NeuralNetwork* network, const Dataset* dataset, 
 
 // --- High-Level API Implementation ---
 
+GannTrainParams gann_create_default_params(void) {
+    GannTrainParams params = {
+        .architecture = NULL,
+        .num_layers = 0,
+        .population_size = 50,
+        .num_generations = 100,
+        .mutation_rate = 0.1f,
+        .mutation_chance = 0.25f,
+        .fitness_samples = 1000,
+        .selection_type = TOURNAMENT_SELECTION,
+        .tournament_size = 5,
+        .activation_hidden = RELU,
+        .activation_output = SIGMOID,
+        .crossover_type = UNIFORM_CROSSOVER,
+        .mutation_type = GAUSSIAN_MUTATION,
+        .mutation_std_dev = 0.1,
+        .logging = true
+    };
+    return params;
+}
+
 NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset) {
     const GannTrainParams* base_params = &params->base_params;
 

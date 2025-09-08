@@ -17,7 +17,8 @@ typedef enum {
  * @param parent1 The first parent network.
  * @param parent2 The second parent network.
  * @param crossover_type The crossover strategy to use.
- * @return A new network created by combining the parents' genes.
+ * @return A new network created by combining the parents' genes. The caller is
+ *         responsible for freeing this new network using `nn_free()`.
  */
 NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type);
 

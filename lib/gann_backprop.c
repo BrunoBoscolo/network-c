@@ -2,9 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset) {
+NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset, const Dataset* validation_dataset) {
     if (params == NULL || train_dataset == NULL || params->architecture == NULL) {
         fprintf(stderr, "Error: Cannot train with backprop. Provided params, dataset or architecture is NULL.\n");
+        return NULL;
+    }
+    if (validation_dataset && (validation_dataset->images->cols != train_dataset->images->cols)) {
+        gann_set_error(GANN_ERROR_INVALID_PARAM);
         return NULL;
     }
     printf("--- Starting Backpropagation Training ---\n");
@@ -37,7 +41,7 @@ NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const 
     printf("  Epochs: %d\n", params->epochs);
     printf("  Batch Size: %d\n", params->batch_size);
 
-    backpropagate(net, train_dataset, params);
+    backpropagate(net, train_dataset, params, validation_dataset);
 
     printf("--- Backpropagation Training Finished ---\n");
 

@@ -112,17 +112,23 @@ GannTrainParams gann_create_default_params(void) {
         .crossover_type = UNIFORM_CROSSOVER,
         .mutation_type = GAUSSIAN_MUTATION,
         .mutation_std_dev = 0.1,
-        .logging = true
+        .logging = true,
+        .early_stopping_patience = 0,
+        .early_stopping_threshold = 0.001
     };
     gann_set_error(GANN_SUCCESS);
     return params;
 }
 
-NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset) {
+NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset, const Dataset* validation_dataset) {
     const GannTrainParams* base_params = &params->base_params;
 
     if (!base_params || !train_dataset || !base_params->architecture) {
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
+        return NULL;
+    }
+    if (validation_dataset && (validation_dataset->images->cols != train_dataset->images->cols)) {
+        gann_set_error(GANN_ERROR_INVALID_PARAM);
         return NULL;
     }
     if (base_params->num_layers < 2 || base_params->population_size <= 0 || base_params->num_generations <= 0 ||
@@ -142,6 +148,11 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
         printf("Created initial population of %d networks.\n", base_params->population_size);
         printf("Starting evolution for %d generations...\n", base_params->num_generations);
     }
+
+    // --- Early Stopping Initialization ---
+    double best_validation_accuracy = -1.0;
+    int generations_without_improvement = 0;
+    NeuralNetwork* best_network_so_far = NULL;
 
     // --- 2. Run Evolutionary Loop ---
     for (int gen = 0; gen < base_params->num_generations; gen++) {
@@ -232,31 +243,65 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
             nn_free(population[i]);
         }
         free(population); // Free the array of pointers
-        free(population_with_fitness);
         free(fittest_networks_info);
 
         population = new_population; // Point to the new generation
-    }
 
-    // --- 3. Find Best Network from the final population ---
-    NeuralNetwork* best_net = NULL;
-    double best_overall_accuracy = 0.0;
-    for (int i = 0; i < base_params->population_size; i++) {
-        double accuracy = calculate_fitness(population[i], train_dataset, train_dataset->num_items); // Final evaluation on full dataset
-        if (accuracy > best_overall_accuracy) {
-            best_overall_accuracy = accuracy;
-            // We need to clone the best network, because the population will be freed.
-            if (best_net) nn_free(best_net);
-            best_net = nn_clone(population[i]);
-            if (!best_net) {
-                // nn_clone failed and set the error. We can't continue.
-                break;
+        // --- Early Stopping Check ---
+        if (validation_dataset && base_params->early_stopping_patience > 0) {
+            // Find the best network in the current generation by sorting the fitness info
+            qsort(population_with_fitness, base_params->population_size, sizeof(NetworkFitness), compare_fitness_desc);
+            NeuralNetwork* current_best_net = population_with_fitness[0].network;
+            double validation_accuracy = gann_evaluate(current_best_net, validation_dataset);
+
+            if (base_params->logging) {
+                printf("Validation Accuracy: %.2f%%\n", validation_accuracy * 100.0);
+            }
+
+            if (validation_accuracy > best_validation_accuracy + base_params->early_stopping_threshold) {
+                best_validation_accuracy = validation_accuracy;
+                generations_without_improvement = 0;
+                // Save a clone of the best network
+                if (best_network_so_far) nn_free(best_network_so_far);
+                best_network_so_far = nn_clone(current_best_net);
+            } else {
+                generations_without_improvement++;
+            }
+
+            if (generations_without_improvement >= base_params->early_stopping_patience) {
+                if (base_params->logging) {
+                    printf("Early stopping triggered after %d generations without improvement.\n", base_params->early_stopping_patience);
+                }
+                free(population_with_fitness);
+                break; // Exit the training loop
             }
         }
+        free(population_with_fitness);
     }
 
-    if (base_params->logging) {
-        printf("Evolution finished. Best accuracy: %.2f%%\n", best_overall_accuracy * 100.0);
+    // --- 3. Determine the best network to return ---
+    NeuralNetwork* best_net = NULL;
+    if (best_network_so_far) {
+        // Early stopping was triggered, so the best network is the one we saved.
+        best_net = best_network_so_far;
+        if (base_params->logging) {
+            printf("Evolution finished. Returning best network from early stopping with validation accuracy: %.2f%%\n", best_validation_accuracy * 100.0);
+        }
+    } else {
+        // No early stopping, so find the best network from the final population.
+        double best_overall_accuracy = 0.0;
+        for (int i = 0; i < base_params->population_size; i++) {
+            double accuracy = calculate_fitness(population[i], train_dataset, train_dataset->num_items); // Final evaluation on full dataset
+            if (accuracy > best_overall_accuracy) {
+                best_overall_accuracy = accuracy;
+                if (best_net) nn_free(best_net);
+                best_net = nn_clone(population[i]);
+                if (!best_net) break;
+            }
+        }
+        if (base_params->logging) {
+            if(best_net) printf("Evolution finished. Best accuracy: %.2f%%\n", best_overall_accuracy * 100.0);
+        }
     }
 
     // --- 4. Cleanup ---
@@ -272,7 +317,7 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
     return best_net;
 }
 
-NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset) {
+NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset, const Dataset* validation_dataset) {
     // Add defensive checks at the beginning of the public API function.
     if (params == NULL || train_dataset == NULL || params->architecture == NULL) {
         fprintf(stderr, "Error: Cannot train network. Provided params, dataset or architecture is NULL.\n");
@@ -285,7 +330,7 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
         .crossover_func = crossover,
         .mutation_func = mutate_network
     };
-    return gann_evolve(&evolve_params, train_dataset);
+    return gann_evolve(&evolve_params, train_dataset, validation_dataset);
 }
 
 int gann_predict(const NeuralNetwork* net, const double* input_data) {

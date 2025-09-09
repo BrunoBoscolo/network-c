@@ -40,6 +40,15 @@ int main() {
     params.activation_hidden = LEAKY_RELU;
     params.num_generations = 50; // Default is 100
 
+    // --- New: Early Stopping ---
+    // We can enable early stopping to prevent overfitting and save time.
+    // The training will stop if the validation accuracy doesn't improve by at least
+    // `early_stopping_threshold` for `early_stopping_patience` generations.
+    // A validation set is required for this. For this simple example, we'll
+    // leave it disabled (patience = 0).
+    params.early_stopping_patience = 10;
+    params.early_stopping_threshold = 0.01; // 1% improvement required
+
     // Print the final parameters to the console.
     printf("Network architecture: [");
     for (int i = 0; i < params.num_layers; i++)
@@ -49,11 +58,22 @@ int main() {
            params.num_generations, params.population_size, params.mutation_chance * 100);
 
 
-    // --- 3. Run Training ---
+    // --- 3. Split Data (Optional) & Run Training ---
+    // For this example, we'll split the training data to create a validation set
+    // so we can demonstrate the early stopping feature.
+    Dataset* validation_dataset = malloc(sizeof(Dataset));
+    Dataset* new_train_dataset = malloc(sizeof(Dataset));
+
+    // Let's use 10,000 samples for validation
+    split_dataset(train_dataset, 10000, new_train_dataset, validation_dataset);
+
+    printf("Training data: %d samples | Validation data: %d samples\n", new_train_dataset->num_items, validation_dataset->num_items);
+
     // This single function call encapsulates the entire genetic algorithm process.
     printf("--------------------\n");
     printf("Starting training...\n");
-    NeuralNetwork* best_net = gann_train(&params, train_dataset);
+    // Pass the validation set to the training function.
+    NeuralNetwork* best_net = gann_train(&params, new_train_dataset, validation_dataset);
 
     // --- 4. Check for errors and Save the Best Network ---
     if (best_net) {
@@ -74,6 +94,9 @@ int main() {
 
     // --- 5. Cleanup ---
     free_dataset(train_dataset);
+    free_dataset(new_train_dataset);
+    free_dataset(validation_dataset);
+
 
     return 0;
 }

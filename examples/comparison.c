@@ -51,8 +51,10 @@ int main() {
         .logging = false
     };
 
+    ga_params.early_stopping_patience = 0; // Disabled for this comparison
+
     clock_t ga_start = clock();
-    NeuralNetwork* ga_net = gann_train(&ga_params, train_dataset);
+    NeuralNetwork* ga_net = gann_train(&ga_params, train_dataset, NULL);
     clock_t ga_end = clock();
 
     if (ga_net) {
@@ -78,8 +80,11 @@ int main() {
         .activation_output = SIGMOID
     };
 
+    bp_params.early_stopping_patience = 0; // Disabled for this comparison
+    bp_params.logging = false;
+
     clock_t bp_start = clock();
-    NeuralNetwork* bp_net = gann_train_with_backprop(&bp_params, train_dataset);
+    NeuralNetwork* bp_net = gann_train_with_backprop(&bp_params, train_dataset, NULL);
     clock_t bp_end = clock();
 
     if (bp_net) {

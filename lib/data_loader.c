@@ -129,6 +129,38 @@ Dataset* load_mnist_dataset(const char* image_path, const char* label_path) {
     return dataset;
 }
 
+// Creates a dummy dataset with a specific label for all items
+Dataset* create_dummy_dataset_with_label(int num_items, int label) {
+    Dataset* dataset = (Dataset*)malloc(sizeof(Dataset));
+    if (!dataset) return NULL;
+
+    dataset->num_items = num_items;
+    dataset->images = create_matrix(num_items, MNIST_IMAGE_SIZE);
+    dataset->labels = create_matrix(num_items, MNIST_NUM_CLASSES);
+
+    if (!dataset->images || !dataset->labels) {
+        free_matrix(dataset->images);
+        free_matrix(dataset->labels);
+        free(dataset);
+        return NULL;
+    }
+
+    static int seeded = 0;
+    if (!seeded) {
+        srand(time(NULL));
+        seeded = 1;
+    }
+
+    for (int i = 0; i < num_items; i++) {
+        for (int j = 0; j < MNIST_IMAGE_SIZE; j++) {
+            dataset->images->data[i][j] = (double)rand() / RAND_MAX;
+        }
+        dataset->labels->data[i][label] = 1.0;
+    }
+
+    return dataset;
+}
+
 // Creates a dummy dataset with random values
 Dataset* create_dummy_dataset(int num_items) {
     Dataset* dataset = (Dataset*)malloc(sizeof(Dataset));
@@ -177,4 +209,31 @@ void free_dataset(Dataset* dataset) {
     free_matrix(dataset->images);
     free_matrix(dataset->labels);
     free(dataset);
+}
+
+void split_dataset(const Dataset* original, int split_size, Dataset* out_dataset_1, Dataset* out_dataset_2) {
+    if (original == NULL || out_dataset_1 == NULL || out_dataset_2 == NULL || split_size >= original->num_items) {
+        return; // Or handle error appropriately
+    }
+
+    int original_size = original->num_items;
+    int first_size = original_size - split_size;
+
+    // First dataset (the larger part)
+    out_dataset_1->num_items = first_size;
+    out_dataset_1->images = create_matrix(first_size, original->images->cols);
+    out_dataset_1->labels = create_matrix(first_size, original->labels->cols);
+    for (int i = 0; i < first_size; i++) {
+        memcpy(out_dataset_1->images->data[i], original->images->data[i], original->images->cols * sizeof(double));
+        memcpy(out_dataset_1->labels->data[i], original->labels->data[i], original->labels->cols * sizeof(double));
+    }
+
+    // Second dataset (the smaller part, used for validation)
+    out_dataset_2->num_items = split_size;
+    out_dataset_2->images = create_matrix(split_size, original->images->cols);
+    out_dataset_2->labels = create_matrix(split_size, original->labels->cols);
+    for (int i = 0; i < split_size; i++) {
+        memcpy(out_dataset_2->images->data[i], original->images->data[first_size + i], original->images->cols * sizeof(double));
+        memcpy(out_dataset_2->labels->data[i], original->labels->data[first_size + i], original->labels->cols * sizeof(double));
+    }
 }

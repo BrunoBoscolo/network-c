@@ -30,6 +30,7 @@ const char* all_suites() {
     mu_run_test(test_backprop_overfit_single_instance);
     mu_run_test(test_backprop_overfit_single_instance_adam);
     mu_run_test(test_backprop_overfit_single_instance_rmsprop);
+    mu_run_test(test_backprop_early_stopping);
 
     // Run tests from test_optimizers.c
     mu_run_test(optimizers_test_suite);

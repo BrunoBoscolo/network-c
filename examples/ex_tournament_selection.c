@@ -40,7 +40,7 @@ int main() {
     printf("A tournament of size %d will be held to select each parent.\n\n", params.tournament_size);
 
     // --- 3. Run Training ---
-    NeuralNetwork* best_net = gann_train(&params, train_dataset);
+    NeuralNetwork* best_net = gann_train(&params, train_dataset, NULL);
 
     // --- 4. Save the Best Network ---
     if (best_net) {

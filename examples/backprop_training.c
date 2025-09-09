@@ -36,7 +36,10 @@ int main() {
         .beta1 = 0.9,
         .beta2 = 0.999,
         .epsilon = 1e-8,
-        .logging = true // Print epoch progress
+        .logging = true, // Print epoch progress
+        // --- New: Early Stopping ---
+        .early_stopping_patience = 3,
+        .early_stopping_threshold = 0.01 // 1% improvement required
     };
 
     printf("Network architecture: [");
@@ -44,10 +47,15 @@ int main() {
         printf("%d%s", params.architecture[i], i == params.num_layers - 1 ? "" : ", ");
     printf("]\n");
 
-    // --- 3. Run Training ---
+    // --- 3. Split Data (Optional) & Run Training ---
+    Dataset* validation_dataset = malloc(sizeof(Dataset));
+    Dataset* new_train_dataset = malloc(sizeof(Dataset));
+    split_dataset(train_dataset, 10000, new_train_dataset, validation_dataset);
+    printf("Training data: %d samples | Validation data: %d samples\n", new_train_dataset->num_items, validation_dataset->num_items);
+
     printf("--------------------\n");
     printf("Starting training...\n");
-    NeuralNetwork* net = gann_train_with_backprop(&params, train_dataset);
+    NeuralNetwork* net = gann_train_with_backprop(&params, new_train_dataset, validation_dataset);
 
     // --- 4. Check for errors and Save the Network ---
     if (net) {
@@ -66,6 +74,8 @@ int main() {
 
     // --- 5. Cleanup ---
     free_dataset(train_dataset);
+    free(new_train_dataset);
+    free(validation_dataset);
 
     return 0;
 }

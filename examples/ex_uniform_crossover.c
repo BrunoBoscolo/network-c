@@ -41,7 +41,7 @@ int main() {
     printf("Each gene of a child is randomly chosen from one of the two parents.\n\n");
 
     // --- 3. Run Training ---
-    NeuralNetwork* best_net = gann_train(&params, train_dataset);
+    NeuralNetwork* best_net = gann_train(&params, train_dataset, NULL);
 
     // --- 4. Save the Best Network ---
     if (best_net) {

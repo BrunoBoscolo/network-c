@@ -26,6 +26,7 @@ const char* test_calculate_mse();
 const char* test_backprop_overfit_single_instance();
 const char* test_backprop_overfit_single_instance_adam();
 const char* test_backprop_overfit_single_instance_rmsprop();
+const char* test_backprop_early_stopping();
 
 // test_optimizers.c
 const char* test_sgd_update();

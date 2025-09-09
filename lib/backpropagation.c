@@ -145,11 +145,17 @@ double calculate_mse(const NeuralNetwork* net, const Dataset* dataset) {
 }
 
 // Main function to train the network using backpropagation
-void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params) {
+void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params, const Dataset* validation_dataset) {
     if (net == NULL || train_dataset == NULL || params == NULL) {
         gann_set_error(GANN_ERROR_NULL_ARGUMENT);
         return;
     }
+
+    // --- Early Stopping Initialization ---
+    double best_validation_accuracy = -1.0;
+    int epochs_without_improvement = 0;
+    NeuralNetwork* best_network_state = NULL;
+
     int t = 0; // Timestep for Adam
     for (int epoch = 0; epoch < params->epochs; epoch++) {
         // Here we would shuffle the dataset for better training, but for simplicity, we'll iterate sequentially.
@@ -273,8 +279,43 @@ void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannB
             free(bias_gradients);
         }
         if (params->logging) {
-            double mse = calculate_mse(net, train_dataset);
-            printf("Epoch %d/%d, MSE: %f\n", epoch + 1, params->epochs, mse);
+            double train_accuracy = gann_evaluate(net, train_dataset);
+            printf("Epoch %d/%d, Train Accuracy: %.2f%%\n", epoch + 1, params->epochs, train_accuracy * 100.0);
         }
+
+        // --- Early Stopping Check ---
+        if (validation_dataset && params->early_stopping_patience > 0) {
+            double validation_accuracy = gann_evaluate(net, validation_dataset);
+            if (params->logging) {
+                printf("  Validation Accuracy: %.2f%%\n", validation_accuracy * 100.0);
+            }
+
+            if (validation_accuracy > best_validation_accuracy + params->early_stopping_threshold) {
+                best_validation_accuracy = validation_accuracy;
+                epochs_without_improvement = 0;
+                // Save a copy of the best network state
+                if (best_network_state) nn_free(best_network_state);
+                best_network_state = nn_clone(net);
+            } else {
+                epochs_without_improvement++;
+            }
+
+            if (epochs_without_improvement >= params->early_stopping_patience) {
+                if (params->logging) {
+                    printf("Early stopping triggered after %d epochs without improvement.\n", params->early_stopping_patience);
+                }
+                break; // Exit the training loop
+            }
+        }
+    }
+
+    // --- Restore Best Network if Early Stopping Occurred ---
+    if (best_network_state) {
+        // Copy the best weights and biases back to the original network
+        for (int l = 0; l < net->num_layers - 1; l++) {
+            matrix_copy_data(net->weights[l], best_network_state->weights[l]);
+            matrix_copy_data(net->biases[l], best_network_state->biases[l]);
+        }
+        nn_free(best_network_state); // Free the saved state
     }
 }

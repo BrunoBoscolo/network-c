@@ -60,7 +60,7 @@ int main() {
         };
 
         // Train the network
-        NeuralNetwork* best_net = gann_train(&params, train_dataset);
+        NeuralNetwork* best_net = gann_train(&params, train_dataset, NULL);
         if (!best_net) {
             fprintf(stderr, "Training failed for %s activation.\n", activation_to_string(current_activation));
             continue; // Skip to the next activation function

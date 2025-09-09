@@ -30,6 +30,8 @@ typedef struct {
     double beta2;                   /**< The exponential decay rate for the second-moment estimates (for Adam and RMSprop). */
     double epsilon;                 /**< A small constant for numerical stability (for Adam and RMSprop). */
     bool logging;                   /**< Whether to print logging information during training. */
+    int early_stopping_patience;    /**< Number of epochs with no improvement to trigger early stopping. 0 to disable. */
+    double early_stopping_threshold;/**< Minimum improvement in validation accuracy to reset patience counter. */
 } GannBackpropParams;
 
 
@@ -40,7 +42,7 @@ typedef struct {
  * @param train_dataset The dataset used for training.
  * @param params The parameters for the backpropagation algorithm.
  */
-void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params);
+void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params, const Dataset* validation_dataset);
 
 // --- Optimizer-specific Weight Update Functions (exposed for testing) ---
 void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size);

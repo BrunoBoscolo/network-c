@@ -11,7 +11,7 @@
 // --- Helper Functions ---
 
 // A mock backpropagate function to call the internal update functions
-void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params);
+void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params, const Dataset* validation_dataset);
 
 
 // --- Test Cases ---

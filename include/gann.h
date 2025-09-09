@@ -53,6 +53,8 @@ typedef struct {
     MutationType mutation_type;     /**< The mutation strategy to use. */
     double mutation_std_dev;        /**< The standard deviation for Gaussian mutation. */
     bool logging;                   /**< Whether to print logging information during training. */
+    int early_stopping_patience;    /**< Number of generations with no improvement to trigger early stopping. 0 to disable. */
+    double early_stopping_threshold;/**< Minimum improvement in validation accuracy to reset patience counter. */
 } GannTrainParams;
 
 /**
@@ -94,7 +96,7 @@ typedef struct {
  * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
  *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
-NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset);
+NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
 
 /**
@@ -107,7 +109,7 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
  * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
  *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
-NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset);
+NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
 
 
@@ -119,7 +121,7 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
  * @return A pointer to the trained NeuralNetwork. The caller is responsible for freeing this network.
  *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
  */
-NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset);
+NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
 
 /**

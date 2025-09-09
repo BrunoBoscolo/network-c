@@ -40,7 +40,7 @@ int main() {
     printf("Mutation rate starts high and decreases over generations.\n\n");
 
     // --- 3. Run Training ---
-    NeuralNetwork* best_net = gann_train(&params, train_dataset);
+    NeuralNetwork* best_net = gann_train(&params, train_dataset, NULL);
 
     // --- 4. Save the Best Network ---
     if (best_net) {

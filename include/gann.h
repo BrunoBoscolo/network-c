@@ -22,49 +22,47 @@
 
 /**
  * @brief Seeds the random number generator used by the library.
- *
- * Call this function once at the beginning of your program to ensure
- * reproducible results from the training process.
- *
- * @param seed The seed for the random number generator.
+ * @details Call this function once at the beginning of your program to ensure
+ * reproducible results from the training process, which relies on randomness
+ * for weight initialization, mutations, and some selection/crossover methods.
+ * @param seed The seed for the random number generator. A common practice is to
+ * use a fixed integer for development and `time(NULL)` for production runs.
  */
 void gann_seed_rng(unsigned int seed);
 
 /**
- * @brief Parameters for the gann_train function.
- *
- * This struct holds all the parameters needed to configure the training process
- * for the genetic algorithm neural network.
+ * @brief Parameters for training a neural network with a genetic algorithm.
+ * @details This struct holds all the parameters needed to configure the
+ * training process. Use `gann_create_default_params()` to get a struct with
+ * sensible default values, and then override fields as needed.
  */
 typedef struct {
-    const int* architecture;        /**< An array defining the number of neurons in each layer. */
-    int num_layers;                 /**< The total number of layers in the network. */
-    int population_size;            /**< The number of networks in each generation. */
-    int num_generations;            /**< The number of generations to run the evolution for. */
-    float mutation_rate;            /**< The magnitude of mutations when they occur. */
-    float mutation_chance;          /**< The probability of a mutation occurring on any given weight or bias. */
-    int fitness_samples;            /**< The number of samples from the dataset to use for fitness evaluation in each generation. Use 0 for the full dataset. */
-    SelectionType selection_type;   /**< The method for selecting the fittest individuals (e.g., ELITE, TOURNAMENT). */
-    int tournament_size;            /**< The number of individuals to compete in a tournament, if tournament selection is used. */
-    int elitism_count;              /**< The number of top individuals to carry over to the next generation directly. */
-    ActivationType activation_hidden; /**< The activation function to use for the hidden layers. */
-    ActivationType activation_output; /**< The activation function to use for the output layer. */
-    CrossoverType crossover_type;   /**< The crossover strategy to use. */
-    MutationType mutation_type;     /**< The mutation strategy to use. */
-    double mutation_std_dev;        /**< The standard deviation for Gaussian mutation. */
-    bool logging;                   /**< Whether to print logging information during training. */
-    int early_stopping_patience;    /**< Number of generations with no improvement to trigger early stopping. 0 to disable. */
-    double early_stopping_threshold;/**< Minimum improvement in validation accuracy to reset patience counter. */
+    const int* architecture;        /**< An array defining the number of neurons in each layer, e.g., `{784, 128, 10}`. */
+    int num_layers;                 /**< The total number of layers in the network (size of the `architecture` array). */
+    int population_size;            /**< The number of neural networks in each generation's population. */
+    int num_generations;            /**< The maximum number of generations to run the evolution for. */
+    float mutation_rate;            /**< The magnitude of change applied during mutation. For Gaussian mutation, this is the standard deviation. */
+    float mutation_chance;          /**< The probability (0.0 to 1.0) of a mutation occurring on any given weight or bias. */
+    int fitness_samples;            /**< The number of samples from the training dataset to use for fitness evaluation in each generation. Use 0 to use the entire dataset. */
+    SelectionType selection_type;   /**< The method for selecting the fittest individuals for reproduction (e.g., `TOURNAMENT_SELECTION`). */
+    int tournament_size;            /**< The number of individuals to compete in a tournament, if `TOURNAMENT_SELECTION` is used. */
+    int elitism_count;              /**< The number of top-performing individuals to carry over to the next generation without modification. */
+    ActivationType activation_hidden; /**< The activation function to use for all hidden layers (e.g., `RELU`, `SIGMOID`). */
+    ActivationType activation_output; /**< The activation function to use for the output layer (e.g., `SIGMOID`, `LINEAR`). */
+    CrossoverType crossover_type;   /**< The crossover strategy to use for combining parent networks (e.g., `UNIFORM_CROSSOVER`). */
+    MutationType mutation_type;     /**< The mutation strategy to use (e.g., `GAUSSIAN_MUTATION`, `RANDOM_MUTATION`). */
+    double mutation_std_dev;        /**< The standard deviation for Gaussian mutation. Only used if `mutation_type` is `GAUSSIAN_MUTATION`. */
+    bool logging;                   /**< If true, prints progress information (generation number, fitness scores) to the console during training. */
+    int early_stopping_patience;    /**< Number of generations with no improvement in validation accuracy to wait before stopping training. Set to 0 to disable. */
+    double early_stopping_threshold;/**< The minimum improvement in validation accuracy required to reset the patience counter for early stopping. */
 } GannTrainParams;
 
 /**
  * @brief Creates a `GannTrainParams` struct with sensible default values.
- *
- * This function is a convenient way to get started with training without having
- * to manually set every parameter. The user must still set the `architecture`
- * and `num_layers` fields.
- *
- * @return A `GannTrainParams` struct with default values.
+ * @details This function provides a convenient starting point for training.
+ * The user is still required to set the `architecture` and `num_layers` fields
+ * manually, as these are specific to the problem being solved.
+ * @return A `GannTrainParams` struct populated with default values.
  */
 GannTrainParams gann_create_default_params(void);
 
@@ -76,38 +74,43 @@ typedef void (*MutationFunction)(NeuralNetwork*, float, float, MutationType, dou
 
 
 /**
- * @brief A struct for the new `gann_evolve` function, which allows for custom genetic operators.
+ * @brief A struct for the `gann_evolve` function, allowing for custom genetic operators.
+ * @details This struct is used to pass a combination of base training parameters and
+ * function pointers for custom selection, crossover, and mutation logic to the
+ * `gann_evolve` function.
  */
 typedef struct {
-    GannTrainParams base_params;
-    SelectionFunction selection_func;
-    CrossoverFunction crossover_func;
-    MutationFunction mutation_func;
+    GannTrainParams base_params;       /**< The base training parameters. */
+    SelectionFunction selection_func;  /**< A function pointer to the selection operator. */
+    CrossoverFunction crossover_func;  /**< A function pointer to the crossover operator. */
+    MutationFunction mutation_func;    /**< A function pointer to the mutation operator. */
 } GannEvolveParams;
 
 
 /**
- * @brief Evolves a population of neural networks using the given genetic operators.
- *
- * This is a more flexible version of `gann_train` that allows for custom genetic operators.
- *
- * @param params The evolution parameters, including function pointers to the genetic operators.
- * @param train_dataset The dataset to train on.
- * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
- *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
+ * @brief Evolves a population of neural networks using custom genetic operators.
+ * @details This is an advanced version of `gann_train` that offers greater
+ * flexibility by allowing the user to provide their own implementations for the
+ * core genetic operators: selection, crossover, and mutation.
+ * @param params The evolution parameters, including the base parameters and function pointers to the genetic operators.
+ * @param train_dataset The dataset to train the network on.
+ * @param validation_dataset An optional dataset for validation, used for early stopping. Can be `NULL`.
+ * @return A pointer to the best-trained `NeuralNetwork`. The caller is responsible for freeing this network using `nn_free()`.
+ * @return `NULL` on failure. If `NULL` is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
 
 /**
- * @brief Trains a new neural network using a genetic algorithm.
- *
- * This function encapsulates the entire training loop.
- *
- * @param params The training parameters.
- * @param train_dataset The dataset to train on.
- * @return A pointer to the best trained NeuralNetwork. The caller is responsible for freeing this network.
- *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
+ * @brief Trains a new neural network using a genetic algorithm with default operators.
+ * @details This function encapsulates the entire genetic algorithm training loop,
+ * including population initialization, evaluation, selection, crossover, and mutation.
+ * It uses the standard genetic operators built into the library.
+ * @param params The training parameters, configured in a `GannTrainParams` struct.
+ * @param train_dataset The dataset to train the network on.
+ * @param validation_dataset An optional dataset for validation, used for early stopping. Can be `NULL`.
+ * @return A pointer to the best-trained `NeuralNetwork`. The caller is responsible for freeing this network using `nn_free()`.
+ * @return `NULL` on failure. If `NULL` is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
@@ -115,32 +118,37 @@ NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_da
 
 /**
  * @brief Trains a new neural network using backpropagation.
- *
- * @param params The backpropagation training parameters.
- * @param train_dataset The dataset to train on.
- * @return A pointer to the trained NeuralNetwork. The caller is responsible for freeing this network.
- *         Returns NULL on failure. If NULL is returned, call `gann_get_last_error()` to get the specific error code.
+ * @details This function trains a single neural network using the backpropagation
+ * algorithm with a chosen optimizer (e.g., SGD, Adam, RMSprop).
+ * @param params The backpropagation training parameters, configured in a `GannBackpropParams` struct.
+ * @param train_dataset The dataset to train the network on.
+ * @param validation_dataset An optional dataset for validation, used for tracking performance during training. Can be `NULL`.
+ * @return A pointer to the trained `NeuralNetwork`. The caller is responsible for freeing this network using `nn_free()`.
+ * @return `NULL` on failure. If `NULL` is returned, call `gann_get_last_error()` to get the specific error code.
  */
 NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset, const Dataset* validation_dataset);
 
 
 /**
- * @brief Makes a prediction on a single input vector.
- *
+ * @brief Makes a prediction on a single input vector using a trained network.
+ * @details This function performs a forward pass through the network with the
+ * given input data and returns the index of the output neuron with the highest activation.
  * @param net The trained neural network.
- * @param input A flat array of input data (e.g., pixel values). Must match the network's input layer size.
- * @return The index of the predicted class (e.g., the digit 0-9), or -1 on failure.
- *         If -1 is returned, call `gann_get_last_error()` to get the specific error code.
+ * @param input A flat array of input data (e.g., pixel values). The size of this array must match the network's input layer size.
+ * @return The index of the predicted class (e.g., the digit 0-9).
+ * @return -1 on failure. If -1 is returned, call `gann_get_last_error()` to get the specific error code.
  */
 int gann_predict(const NeuralNetwork* net, const double* input);
 
 /**
  * @brief Evaluates the network's accuracy on a given dataset.
- *
+ * @details This function iterates through the entire dataset, makes a prediction
+ * for each item, and calculates the overall accuracy as the ratio of correct
+ * predictions to the total number of items.
  * @param net The trained neural network.
- * @param dataset The dataset to evaluate on (e.g., a test set).
- * @return The accuracy of the network on the dataset (a value from 0.0 to 1.0).
- *         On failure, returns 0.0 and sets an error code. Call `gann_get_last_error()` to check for errors.
+ * @param dataset The dataset to evaluate on (e.g., a test set or validation set).
+ * @return The accuracy of the network on the dataset, as a value from 0.0 to 1.0.
+ * @return On failure, returns 0.0 and sets an error code. Call `gann_get_last_error()` to check for errors.
  */
 double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset);
 

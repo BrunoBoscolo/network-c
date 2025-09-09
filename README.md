@@ -15,96 +15,103 @@ This project is a C implementation of a simple feedforward neural network that c
 - **Reproducible Results**: The random number generator can be seeded to ensure that training is deterministic.
 
 ## Architecture
-The project's source code is located in the `lib/` directory and is organized into four main components:
-- `matrix`: A general-purpose matrix library for creating and manipulating 2D matrices.
-- `neural_network`: Contains the core logic for the neural network, including network creation, forward propagation, mutation, and persistence.
-- `evolution`: Implements the genetic algorithm, including population creation, fitness evaluation, selection, crossover, and reproduction.
-- `data_loader`: Handles loading the MNIST dataset from files into a format that can be used by the neural network.
+The project's source code is located in the `lib/` directory, with public headers in `include/`. The library is organized into the following modules:
+
+-   **`gann`**: Provides the main high-level API (`gann.h`) for training and using networks.
+-   **`neural_network`**: Contains the core logic for the neural network, including creation, forward propagation, and persistence.
+-   **`matrix`**: A general-purpose matrix library for creating and manipulating the 2D matrices used for weights, biases, and data.
+-   **`data_loader`**: Handles loading the MNIST dataset from its binary file format.
+-   **`evolution`**: Implements the core evolutionary loop (`evo_create_initial_population`, `evo_reproduce`).
+-   **`selection`**: Implements different parent selection strategies for the genetic algorithm (e.g., Tournament, Roulette Wheel).
+-   **`crossover`**: Implements different crossover strategies for combining parent networks (e.g., Uniform, Single-Point).
+-   **`mutation`**: Implements different mutation strategies for introducing genetic diversity (e.g., Gaussian, Uniform).
+-   **`backpropagation`**: Contains the implementation of the backpropagation algorithm and its optimizers (SGD, Adam, RMSprop).
+-   **`gann_errors`**: A simple, thread-safe error handling system.
 
 ## Getting Started
 
 ### Prerequisites
-- A C compiler (e.g., `gcc`)
+- A C compiler (e.g., `gcc` or `clang`)
 - `make`
+- (Optional) `doxygen` for generating documentation.
 
 ### Building the Project
 The project uses a `Makefile` for building. The MNIST dataset is already included in the `data/` directory.
 
-1.  **Build the training and recognition applications**:
+1.  **Build the example applications**:
     ```bash
     make all
-    make recognizer
     ```
-    This will create two executables: `main` for training, and `recognizer` for evaluating a trained network.
+    This will create several executables in the root directory, including `training` (for GA), `backprop_training` (for backprop), and `recognizer` (for evaluation).
 
 ### Running the Application
 
-1.  **Train a new network**:
+1.  **Train a new network with the Genetic Algorithm**:
     ```bash
-    ./main
+    ./training
     ```
     This will train a new network and save the best one to `trained_network.dat`.
 
-2.  **Run the Number Recognizer**:
+2.  **Train a new network with Backpropagation**:
+    ```bash
+    ./backprop_training
+    ```
+
+3.  **Run the Number Recognizer**:
     ```bash
     ./recognizer
     ```
-    This will load the `trained_network.dat` file and evaluate its accuracy on the MNIST test set. You can also specify a different network file as a command-line argument:
-    ```bash
-    ./recognizer my_network.dat
-    ```
+    This will load the `trained_network.dat` file and evaluate its accuracy on the MNIST test set. You can also specify a different network file: `./recognizer my_network.dat`.
 
-3.  **Compare Activation Functions**:
-    A separate example is provided to compare the performance of the different activation functions.
+4.  **Run Other Examples**:
+    The `examples/` directory contains several other executables for comparing genetic operators and activation functions. Use `make examples` to build them all.
     ```bash
+    make examples
     ./examples/activations_comparison
+    ./examples/comparison
     ```
-    This will train a network for each activation function (Sigmoid, ReLU, Leaky ReLU) and print the final accuracy of each.
 
 ### Running the Tests
-The project includes a test suite to verify the correctness of the core components. To run the tests, use the following command:
+The project includes a test suite using the `minunit` framework. To run the tests:
 ```bash
 make test
 ```
 
 ## How It Works
 
-A high-level API is provided in `gann.h` to make training easy. You only need to load your data, define the parameters, and call one of the training functions.
+A high-level API is provided in `gann.h` to make training easy. You only need to load your data, define the parameters, and call one of the main training functions.
 
 ### Reproducibility
-For debugging or scientific experiments, it's important to have reproducible results. This library uses a pseudo-random number generator for initializing network weights and for some genetic operators. To ensure that you get the same "random" results every time you run the program, you can seed the generator.
+For debugging or experiments, it's important to have reproducible results. This library uses a pseudo-random number generator for weight initialization and genetic operators. To ensure you get the same "random" results every time, seed the generator by calling `gann_seed_rng` at the beginning of your `main` function:
 
-To do this, call the `gann_seed_rng` function at the beginning of your `main` function:
 ```c
 #include "gann.h"
 #include <time.h>
 
 int main() {
-    // Use a fixed seed for deterministic results
+    // Use a fixed seed for deterministic results during development
     gann_seed_rng(12345);
 
-    // To get different results on each run, you can use the current time as a seed
+    // To get different results on each run, you can use the current time
     // gann_seed_rng(time(NULL));
 
     // ... your code here ...
 }
 ```
 
-### Neural Network
-The neural network is a simple feedforward network. It takes a flattened 28x28 (784-pixel) image as input and passes it through a series of layers. The output layer has 10 neurons, one for each digit (0-9). The neuron with the highest activation is the network's guess.
-
 ### Training Methods
 This library provides two different ways to train the neural network: a **Genetic Algorithm** and **Backpropagation**.
 
 #### 1. Genetic Algorithm
-The genetic algorithm is inspired by biological evolution. It's a great way to learn about how evolution can be used as an optimization technique.
-1.  **Initialization**: An initial population of random neural networks is created.
-2.  **Evaluation**: Each network in the population is evaluated based on its performance on the MNIST dataset. Its "fitness" is the number of digits it correctly identifies.
-3.  **Selection**: The top-performing networks (the "fittest") are selected to be "parents" for the next generation.
-4.  **Reproduction**: The selected parents are combined using crossover to create new "child" networks. These children are then slightly mutated. These new networks form the next generation.
-5.  **Repeat**: The process is repeated for many generations, and over time, the population of networks evolves to become better at recognizing digits.
+The genetic algorithm is inspired by biological evolution. It works by evolving a population of networks over many generations.
 
-To train a network with the genetic algorithm, use the `gann_train` function. You can get a set of sensible default parameters by calling `gann_create_default_params()` and then override them as needed.
+1.  **Initialization**: An initial population of random neural networks is created.
+2.  **Evaluation**: Each network is evaluated based on its performance on the training data. Its "fitness" is its accuracy.
+3.  **Selection**: The top-performing networks ("parents") are selected for reproduction.
+4.  **Reproduction**: The selected parents are combined using **crossover** to create new "child" networks. These children are then slightly changed with **mutation**.
+5.  **Repeat**: This process repeats, and over time, the population evolves to become better at the task.
+
+To train a network with the genetic algorithm, use the `gann_train` function. You can get a set of sensible default parameters by calling `gann_create_default_params()` and then overriding them as needed.
 
 *Example (`examples/training.c`):*
 ```c
@@ -117,13 +124,13 @@ params.architecture = ARCHITECTURE;
 params.num_layers = sizeof(ARCHITECTURE) / sizeof(int);
 
 // Start training
-NeuralNetwork* best_net = gann_train(&params, train_dataset);
+NeuralNetwork* best_net = gann_train(&params, train_dataset, NULL);
 ```
 
 #### 2. Backpropagation
-Backpropagation is a standard algorithm for training neural networks. It works by calculating the error (or "loss") of the network's predictions and then propagating this error backward through the network to adjust the weights and biases. This library supports three common optimization algorithms: **SGD**, **Adam**, and **RMSprop**.
+Backpropagation is a standard algorithm for training neural networks. It works by calculating the error of the network's predictions and then propagating this error backward through the network to adjust the weights and biases. This library supports three common optimization algorithms: **SGD**, **Adam**, and **RMSprop**.
 
-To train a network with backpropagation, use the `gann_train_with_backprop` function. You need to fill out the `GannBackpropParams` struct with your desired configuration.
+To train a network with backpropagation, use the `gann_train_with_backprop` function.
 
 *Example (`examples/backprop_training.c`):*
 ```c
@@ -141,8 +148,47 @@ GannBackpropParams params = {
 };
 
 // Start training
-NeuralNetwork* net = gann_train_with_backprop(&params, train_dataset);
+NeuralNetwork* net = gann_train_with_backprop(&params, train_dataset, NULL);
 ```
+
+### Advanced Usage: Custom Genetic Operators
+For more advanced use cases, the `gann_evolve` function allows you to provide your own implementations for the core genetic operators. This is useful for experimenting with new selection, crossover, or mutation techniques.
+
+You can define your own functions and pass them in a `GannEvolveParams` struct:
+```c
+// 1. Define your custom functions (examples)
+NetworkFitness* my_selection(NetworkFitness* pop, int size, int* num_fittest, SelectionType type, int tour_size) { /* ... */ }
+NeuralNetwork* my_crossover(const NeuralNetwork* p1, const NeuralNetwork* p2, CrossoverType type) { /* ... */ }
+void my_mutation(NeuralNetwork* net, float rate, float chance, /*...*/) { /* ... */ }
+
+// 2. Set up the parameters
+GannEvolveParams evolve_params = {
+    .base_params = gann_create_default_params(), // Start with defaults
+    .selection_func = my_selection,
+    .crossover_func = my_crossover,
+    .mutation_func = my_mutation,
+};
+// ... set architecture, etc. on evolve_params.base_params ...
+
+// 3. Start evolution
+gann_evolve(&evolve_params, train_dataset, NULL);
+```
+
+## Documentation
+The source code is documented using Doxygen-style comments. To generate a full HTML documentation set:
+
+1.  **Install Doxygen**:
+    ```bash
+    # On Debian/Ubuntu
+    sudo apt-get install doxygen
+    # On macOS (using Homebrew)
+    brew install doxygen
+    ```
+2.  **Generate Documentation**:
+    ```bash
+    make docs
+    ```
+This will create a `docs/` directory. Open `docs/html/index.html` in your browser to view the documentation.
 
 ## Contributing
 Contributions are welcome. Please open an issue to discuss any changes.

@@ -15,13 +15,68 @@ const char* NETWORK_FILE = "trained_network.dat";
 static cairo_surface_t *surface = NULL;
 static GtkWidget *drawing_area;
 static GtkWidget *prediction_label;
+static GtkWidget *model_status_label;
 static NeuralNetwork* net = NULL;
 
 // --- Function Prototypes ---
 static void clear_surface();
 static void process_and_predict();
+static void load_network(const char* filename);
+static void load_model_button_clicked(GtkWidget *widget, gpointer data);
 
 // --- GUI Callbacks ---
+
+/**
+ * @brief Callback for the "Load Model" button.
+ */
+static void load_network(const char* filename) {
+    if (net) {
+        nn_free(net);
+        net = NULL;
+    }
+
+    net = nn_load(filename);
+
+    if (net) {
+        char status_text[1024];
+        g_snprintf(status_text, sizeof(status_text), "Model: %s", g_path_get_basename(filename));
+        gtk_label_set_text(GTK_LABEL(model_status_label), status_text);
+    } else {
+        gtk_label_set_text(GTK_LABEL(model_status_label), "Error: Failed to load model.");
+    }
+}
+
+static void load_model_button_clicked(GtkWidget *widget, gpointer data) {
+    GtkWidget *dialog;
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+    gint res;
+
+    dialog = gtk_file_chooser_dialog_new("Open File",
+                                         GTK_WINDOW(data),
+                                         action,
+                                         "_Cancel",
+                                         GTK_RESPONSE_CANCEL,
+                                         "_Open",
+                                         GTK_RESPONSE_ACCEPT,
+                                         NULL);
+
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Network files (*.dat)");
+    gtk_file_filter_add_pattern(filter, "*.dat");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    res = gtk_dialog_run(GTK_DIALOG(dialog));
+    if (res == GTK_RESPONSE_ACCEPT) {
+        char *filename;
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+        filename = gtk_file_chooser_get_filename(chooser);
+        load_network(filename);
+        g_free(filename);
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
 
 /**
  * @brief Clears the drawing surface to white.
@@ -168,15 +223,6 @@ static void process_and_predict() {
 // --- Main Application Setup ---
 
 int main(int argc, char *argv[]) {
-    // Load the neural network once at the start
-    net = nn_load(NETWORK_FILE);
-    if (!net) {
-        fprintf(stderr, "CRITICAL: Could not load the neural network from '%s'.\n", NETWORK_FILE);
-        fprintf(stderr, "Please ensure the trained model exists. Run the training example first.\n");
-        // We can still run the GUI, but prediction will fail.
-    }
-
-
     gtk_init(&argc, &argv);
 
     // --- Create Widgets ---
@@ -189,18 +235,35 @@ int main(int argc, char *argv[]) {
 
     GtkWidget *predict_button = gtk_button_new_with_label("Predict");
     GtkWidget *clear_button = gtk_button_new_with_label("Clear");
+    GtkWidget *load_model_button = gtk_button_new_with_label("Load Model");
     prediction_label = gtk_label_new("Prediction: -");
+    model_status_label = gtk_label_new("Model: -"); // Initial text
+
+    // Attempt to load the default neural network at the start
+    load_network(NETWORK_FILE);
+    if (!net) {
+        fprintf(stderr, "INFO: Could not load the default network from '%s'.\n", NETWORK_FILE);
+        fprintf(stderr, "You can load a network using the 'Load Model' button.\n");
+    }
 
     // --- Layout ---
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+    GtkWidget *hbox_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+    GtkWidget *hbox_status = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
     gtk_box_pack_start(GTK_BOX(vbox), drawing_area, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox_buttons, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox_status, FALSE, TRUE, 0); // Add status hbox
 
-    gtk_box_pack_start(GTK_BOX(hbox), predict_button, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), clear_button, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), prediction_label, TRUE, TRUE, 0);
+    // Pack buttons
+    gtk_box_pack_start(GTK_BOX(hbox_buttons), predict_button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox_buttons), clear_button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox_buttons), load_model_button, TRUE, TRUE, 0);
+
+    // Pack labels
+    gtk_box_pack_start(GTK_BOX(hbox_status), prediction_label, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox_status), model_status_label, TRUE, TRUE, 0);
+
 
     gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -212,6 +275,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(drawing_area, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
     g_signal_connect(predict_button, "clicked", G_CALLBACK(predict_button_clicked), NULL);
     g_signal_connect(clear_button, "clicked", G_CALLBACK(clear_button_clicked), NULL);
+    g_signal_connect(load_model_button, "clicked", G_CALLBACK(load_model_button_clicked), window);
 
     // Enable mouse events on the drawing area
     gtk_widget_set_events(drawing_area, gtk_widget_get_events(drawing_area) | GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK);

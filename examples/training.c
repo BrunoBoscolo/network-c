@@ -38,7 +38,7 @@ int main() {
     // For example, let's use a different activation function for the hidden layers
     // and run for fewer generations for a quicker example.
     params.activation_hidden = LEAKY_RELU;
-    params.num_generations = 50; // Default is 100
+    params.num_generations = 1000; // Default is 100
 
     // --- New: Early Stopping ---
     // We can enable early stopping to prevent overfitting and save time.
@@ -46,7 +46,7 @@ int main() {
     // `early_stopping_threshold` for `early_stopping_patience` generations.
     // A validation set is required for this. For this simple example, we'll
     // leave it disabled (patience = 0).
-    params.early_stopping_patience = 10;
+    params.early_stopping_patience = 40;
     params.early_stopping_threshold = 0.01; // 1% improvement required
 
     // Print the final parameters to the console.

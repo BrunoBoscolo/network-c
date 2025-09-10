@@ -11,7 +11,11 @@ STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so
 
 # --- Examples ---
-EXAMPLE_BINS = examples/training examples/recognizer examples/activations_comparison examples/backprop_training examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
+EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
+
+# GTK flags
+GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
+GTK_LDFLAGS = $(shell pkg-config --libs gtk+-3.0)
 
 # --- Tests ---
 TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c test/test_genetic_operators.c test/test_data_loader.c test/test_gann_errors.c
@@ -43,6 +47,9 @@ examples/training: examples/training.c $(STATIC_LIB)
 
 examples/recognizer: examples/recognizer.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+
+examples/recognizer_gui: examples/recognizer_gui.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS) $(GTK_LDFLAGS)
 
 examples/activations_comparison: examples/activations_comparison.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)

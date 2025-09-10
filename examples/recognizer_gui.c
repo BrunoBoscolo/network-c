@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 // --- Constants ---
-#define CANVAS_WIDTH 28
-#define CANVAS_HEIGHT 28
+#define CANVAS_WIDTH 280
+#define CANVAS_HEIGHT 280
 #define DOWNSCALE_WIDTH 28
 #define DOWNSCALE_HEIGHT 28
 #define NETWORK_INPUT_SIZE (DOWNSCALE_WIDTH * DOWNSCALE_HEIGHT)
@@ -77,7 +77,6 @@ static void load_model_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_widget_destroy(dialog);
 }
 
-
 /**
  * @brief Clears the drawing surface to white.
  */
@@ -134,10 +133,10 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
 static void draw_brush(GtkWidget *widget, gdouble x, gdouble y) {
     cairo_t *cr = cairo_create(surface);
     cairo_set_source_rgb(cr, 0, 0, 0); // Black
-    cairo_rectangle(cr, x - 1, y - 1, 2, 2); // Draw a 2x2 square brush
+    cairo_rectangle(cr, x - 10, y - 10, 20, 20); // Draw a 20x20 square brush
     cairo_fill(cr);
     cairo_destroy(cr);
-    gtk_widget_queue_draw_area(widget, x - 1, y - 1, 2, 2); // Update the affected area
+    gtk_widget_queue_draw_area(widget, x - 10, y - 10, 20, 20); // Update the affected area
 }
 
 /**
@@ -174,11 +173,19 @@ static void process_and_predict() {
         return;
     }
 
-    // 2. Convert to grayscale and normalize into a flat array
+    // 2. Downscale the image to 28x28
+    GdkPixbuf *scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, DOWNSCALE_WIDTH, DOWNSCALE_HEIGHT, GDK_INTERP_BILINEAR);
+    g_object_unref(pixbuf); // Free original pixbuf
+    if (!scaled_pixbuf) {
+        fprintf(stderr, "Error: Failed to scale pixbuf.\n");
+        return;
+    }
+
+    // 3. Convert to grayscale and normalize into a flat array
     double network_input[NETWORK_INPUT_SIZE];
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(scaled_pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(scaled_pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(scaled_pixbuf);
 
     for (int y = 0; y < DOWNSCALE_HEIGHT; y++) {
         for (int x = 0; x < DOWNSCALE_WIDTH; x++) {
@@ -190,9 +197,9 @@ static void process_and_predict() {
         }
     }
 
-    g_object_unref(pixbuf); // Free pixbuf
+    g_object_unref(scaled_pixbuf); // Free scaled pixbuf
 
-    // 3. Make a prediction
+    // 4. Make a prediction
     if (!net) {
         fprintf(stderr, "Error: Network not loaded.\n");
         gtk_label_set_text(GTK_LABEL(prediction_label), "Error: Network not loaded");
@@ -220,7 +227,6 @@ int main(int argc, char *argv[]) {
     // --- Create Widgets ---
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Digit Recognizer");
-    gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_window_set_default_size(GTK_WINDOW(window), CANVAS_WIDTH, CANVAS_HEIGHT + 50);
 
     drawing_area = gtk_drawing_area_new();
@@ -246,7 +252,7 @@ int main(int argc, char *argv[]) {
 
     gtk_box_pack_start(GTK_BOX(vbox), drawing_area, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox_buttons, FALSE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox_status, FALSE, TRUE, 0); // Add status hbox
+    gtk_box_pack_start(GTK_BOX(vbox), hbox_status, FALSE, TRUE, 0);
 
     // Pack buttons
     gtk_box_pack_start(GTK_BOX(hbox_buttons), predict_button, TRUE, TRUE, 0);

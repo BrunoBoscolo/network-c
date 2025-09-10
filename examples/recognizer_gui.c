@@ -26,9 +26,6 @@ static void load_model_button_clicked(GtkWidget *widget, gpointer data);
 
 // --- GUI Callbacks ---
 
-/**
- * @brief Callback for the "Load Model" button.
- */
 static void load_network(const char* filename) {
     if (net) {
         nn_free(net);

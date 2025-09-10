@@ -185,6 +185,36 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
                    gen + 1, base_params->num_generations, best_accuracy_in_gen * 100.0, fitness_mean, fitness_std_dev);
         }
 
+        // --- Early Stopping Check ---
+        if (validation_dataset && base_params->early_stopping_patience > 0) {
+            // Find the best network in the current generation by sorting the fitness info
+            qsort(population_with_fitness, base_params->population_size, sizeof(NetworkFitness), compare_fitness_desc);
+            NeuralNetwork* current_best_net = population_with_fitness[0].network;
+            double validation_accuracy = gann_evaluate(current_best_net, validation_dataset);
+
+            if (base_params->logging) {
+                printf("Validation Accuracy: %.2f%%\n", validation_accuracy * 100.0);
+            }
+
+            if (validation_accuracy > best_validation_accuracy + base_params->early_stopping_threshold) {
+                best_validation_accuracy = validation_accuracy;
+                generations_without_improvement = 0;
+                // Save a clone of the best network
+                if (best_network_so_far) nn_free(best_network_so_far);
+                best_network_so_far = nn_clone(current_best_net);
+            } else {
+                generations_without_improvement++;
+            }
+
+            if (generations_without_improvement >= base_params->early_stopping_patience) {
+                if (base_params->logging) {
+                    printf("Early stopping triggered after %d generations without improvement.\n", base_params->early_stopping_patience);
+                }
+                free(population_with_fitness);
+                break; // Exit the training loop
+            }
+        }
+
         int num_fittest;
         NetworkFitness* fittest_networks_info = params->selection_func(population_with_fitness, base_params->population_size, &num_fittest, (SelectionType)base_params->selection_type, base_params->tournament_size);
 
@@ -246,36 +276,6 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
         free(fittest_networks_info);
 
         population = new_population; // Point to the new generation
-
-        // --- Early Stopping Check ---
-        if (validation_dataset && base_params->early_stopping_patience > 0) {
-            // Find the best network in the current generation by sorting the fitness info
-            qsort(population_with_fitness, base_params->population_size, sizeof(NetworkFitness), compare_fitness_desc);
-            NeuralNetwork* current_best_net = population_with_fitness[0].network;
-            double validation_accuracy = gann_evaluate(current_best_net, validation_dataset);
-
-            if (base_params->logging) {
-                printf("Validation Accuracy: %.2f%%\n", validation_accuracy * 100.0);
-            }
-
-            if (validation_accuracy > best_validation_accuracy + base_params->early_stopping_threshold) {
-                best_validation_accuracy = validation_accuracy;
-                generations_without_improvement = 0;
-                // Save a clone of the best network
-                if (best_network_so_far) nn_free(best_network_so_far);
-                best_network_so_far = nn_clone(current_best_net);
-            } else {
-                generations_without_improvement++;
-            }
-
-            if (generations_without_improvement >= base_params->early_stopping_patience) {
-                if (base_params->logging) {
-                    printf("Early stopping triggered after %d generations without improvement.\n", base_params->early_stopping_patience);
-                }
-                free(population_with_fitness);
-                break; // Exit the training loop
-            }
-        }
         free(population_with_fitness);
     }
 

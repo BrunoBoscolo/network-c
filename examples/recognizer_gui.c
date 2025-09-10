@@ -220,6 +220,7 @@ int main(int argc, char *argv[]) {
     // --- Create Widgets ---
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Digit Recognizer");
+    gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_window_set_default_size(GTK_WINDOW(window), CANVAS_WIDTH, CANVAS_HEIGHT + 50);
 
     drawing_area = gtk_drawing_area_new();

@@ -28,7 +28,7 @@ int main() {
         .mutation_chance = 0.25f,
         .fitness_samples = 500,
         .selection_type = ELITISM_SELECTION,
-        .tournament_size = 0,
+        .tournament_size = 2,
         .activation_hidden = RELU,
         .crossover_type = ARITHMETIC_CROSSOVER,
         .mutation_type = UNIFORM_MUTATION,

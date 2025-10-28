@@ -11,7 +11,7 @@ STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so
 
 # --- Examples ---
-EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
+EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
 
 # GTK flags
 GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
@@ -73,6 +73,9 @@ examples/ex_non_uniform_mutation: examples/ex_non_uniform_mutation.c $(STATIC_LI
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/ex_adaptive_mutation: examples/ex_adaptive_mutation.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+
+examples/backprop_progressive_epochs: examples/backprop_progressive_epochs.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 # Rule to compile library source files into object files

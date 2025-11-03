@@ -1,0 +1,184 @@
+{
+  "functions": [
+    {
+      "name": "gann_seed_rng",
+      "doc": "void gann_seed_rng(unsigned int seed)\\n\\nConceito:\\nSemeia o gerador de números aleatórios usado pela biblioteca. Isso é crucial para a reprodutibilidade. Em aprendizado de máquina, muitos processos (como inicialização de pesos e operadores de algoritmos genéticos) são estocásticos. Ao semear o gerador de números aleatórios, você garante que a sequência de números 'aleatórios' seja a mesma toda vez que você executa o programa, tornando os experimentos e a depuração muito mais fáceis."
+    },
+    {
+      "name": "gann_create_default_params",
+      "doc": "GannTrainParams gann_create_default_params(void)\\n\\nConceito:\\nCria uma estrutura com parâmetros de treinamento padrão sensatos para o algoritmo genético. Treinar uma rede neural, especialmente com um algoritmo genético, envolve o ajuste de muitos hiperparâmetros. Esta função fornece um ponto de partida razoável, evitando que o usuário precise especificar cada parâmetro do zero."
+    },
+    {
+      "name": "gann_evolve",
+      "doc": "NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_dataset, const Dataset* validation_dataset)\\n\\nConceito:\\nEvolui uma população de redes neurais usando operadores genéticos personalizados. Esta função é para usuários avançados que desejam experimentar com seus próprios algoritmos de seleção, cruzamento ou mutação. Ela oferece a flexibilidade de estender as capacidades da biblioteca sem modificar o código-fonte principal."
+    },
+    {
+      "name": "gann_train",
+      "doc": "NeuralNetwork* gann_train(const GannTrainParams* params, const Dataset* train_dataset, const Dataset* validation_dataset)\\n\\nConceito:\\nTreina uma rede neural usando um algoritmo genético com operadores padrão. Esta função abstrai a complexidade do algoritmo genético, permitindo ao usuário treinar uma rede com uma única chamada de função. É o principal ponto de entrada para o treinamento com um algoritmo genético."
+    },
+    {
+      "name": "gann_train_with_backprop",
+      "doc": "NeuralNetwork* gann_train_with_backprop(const GannBackpropParams* params, const Dataset* train_dataset, const Dataset* validation_dataset)\\n\\nConceito:\\nTreina uma rede neural usando o algoritmo de retropropagação. A retropropagação é um algoritmo amplamente utilizado para treinar redes neurais. Esta função fornece uma maneira mais tradicional de treinar uma rede, em contraste com a abordagem do algoritmo genético."
+    },
+    {
+      "name": "gann_predict",
+      "doc": "int gann_predict(const NeuralNetwork* net, const double* input)\\n\\nConceito:\\nFaz uma previsão em uma única entrada usando uma rede treinada. Uma vez que a rede é treinada, esta função é usada para realizar inferência em dados novos e não vistos. Ela realiza uma passagem para a frente e retorna a saída mais provável."
+    },
+    {
+      "name": "gann_evaluate",
+      "doc": "double gann_evaluate(const NeuralNetwork* net, const Dataset* dataset)\\n\\nConceito:\\nAvalia a precisão da rede em um determinado conjunto de dados. Este é um passo crucial para entender o quão bem a rede aprendeu. É usado para medir o desempenho do modelo em um conjunto de teste, que não foi visto durante o treinamento."
+    },
+    {
+      "name": "nn_create",
+      "doc": "NeuralNetwork* nn_create(int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output)\\n\\nConceito:\\nCria e aloca uma nova estrutura de rede neural. Esta função configura o esqueleto básico da rede, incluindo suas camadas e o número de neurônios em cada camada. É o primeiro passo na construção de uma rede neural."
+    },
+    {
+      "name": "nn_init",
+      "doc": "void nn_init(NeuralNetwork* net)\\n\\nConceito:\\nInicializa os pesos de uma rede neural com valores aleatórios. A inicialização adequada dos pesos é fundamental para o treinamento de redes neurais. Esta função usa uma técnica padrão (inicialização de Xavier/Glorot) para evitar problemas como o desaparecimento ou a explosão de gradientes."
+    },
+    {
+      "name": "nn_free",
+      "doc": "void nn_free(NeuralNetwork* net)\\n\\nConceito:\\nLibera toda a memória alocada para uma rede neural. Em C, o gerenciamento de memória é manual. Esta função é essencial para evitar vazamentos de memória, desalocando a rede e todos os seus componentes."
+    },
+    {
+      "name": "nn_forward_pass",
+      "doc": "Matrix* nn_forward_pass(const NeuralNetwork* net, const Matrix* input)\\n\\nConceito:\\nRealiza uma passagem para a frente através da rede para calcular uma saída. Esta é a operação central de uma rede neural, onde os dados de entrada são processados através das camadas para produzir uma previsão. É a parte 'pensante' da rede."
+    },
+    {
+      "name": "nn_clone",
+      "doc": "NeuralNetwork* nn_clone(const NeuralNetwork* src_net)\\n\\nConceito:\\nCria uma cópia profunda de uma rede neural. Isso é particularmente útil em algoritmos genéticos, onde você precisa criar cópias das redes dos pais para criar os filhos. Uma cópia profunda garante que a nova rede seja completamente independente da original."
+    },
+    {
+      "name": "nn_save",
+      "doc": "int nn_save(const NeuralNetwork* net, const char* filepath)\\n\\nConceito:\\nSalva a estrutura e os parâmetros de uma rede neural em um arquivo. Treinar uma rede neural pode levar muito tempo. Esta função permite que você salve seu modelo treinado para que possa usá-lo mais tarde sem precisar retreiná-lo."
+    },
+    {
+      "name": "nn_load",
+      "doc": "NeuralNetwork* nn_load(const char* filepath)\\n\\nConceito:\\nCarrega uma rede neural de um arquivo. Esta função permite carregar um modelo salvo anteriormente e usá-lo para previsão ou treinamento adicional."
+    },
+    {
+      "name": "backpropagate",
+      "doc": "void backpropagate(NeuralNetwork* net, const Dataset* train_dataset, const GannBackpropParams* params, const Dataset* validation_dataset)\\n\\nConceito:\\nA função principal para o treinamento com retropropagação. Ela itera sobre o conjunto de dados por um número especificado de épocas, processando os dados em lotes. Em cada lote, calcula os gradientes e atualiza os pesos e vieses da rede usando o otimizador escolhido."
+    },
+    {
+      "name": "update_weights_sgd",
+      "doc": "void update_weights_sgd(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size)\\n\\nConceito:\\nAtualiza os pesos da rede usando o Gradiente Descendente Estocástico (SGD). O SGD é o otimizador mais simples. Ele atualiza os pesos na direção oposta do gradiente, dimensionado pela taxa de aprendizado. É computacionalmente eficiente, mas pode ser lento para convergir."
+    },
+    {
+      "name": "update_weights_rmsprop",
+      "doc": "void update_weights_rmsprop(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size)\\n\\nConceito:\\nAtualiza os pesos da rede usando o algoritmo RMSprop. O RMSprop é um método de taxa de aprendizado adaptável que divide a taxa de aprendizado de um peso por uma média móvel das magnitudes dos gradientes recentes para esse peso. É eficaz em ambientes não estacionários."
+    },
+    {
+      "name": "update_weights_adam",
+      "doc": "void update_weights_adam(NeuralNetwork* net, Matrix** weight_gradients, Matrix** bias_gradients, const GannBackpropParams* params, int batch_size, int t)\\n\\nConceito:\\nAtualiza os pesos da rede usando o algoritmo Adam. O Adam (Adaptive Moment Estimation) é outro método de taxa de aprendizado adaptável que calcula taxas de aprendizado adaptáveis individuais para diferentes parâmetros a partir de estimativas dos primeiros e segundos momentos dos gradientes. É um dos otimizadores mais populares e eficazes."
+    },
+    {
+      "name": "calculate_mse",
+      "doc": "double calculate_mse(const NeuralNetwork* net, const Dataset* dataset)\\n\\nConceito:\\nCalcula o erro quadrático médio (MSE) para uma rede em um determinado conjunto de dados. O MSE é uma função de perda comum usada para problemas de regressão. Ele mede a diferença quadrática média entre os valores estimados e o valor real."
+    },
+    {
+      "name": "crossover",
+      "doc": "NeuralNetwork* crossover(const NeuralNetwork* parent1, const NeuralNetwork* parent2, CrossoverType crossover_type)\\n\\nConceito:\\nRealiza o cruzamento entre duas redes parentais para criar uma rede filha. O cruzamento (ou recombinação) é um operador genético usado para combinar as informações genéticas de dois pais para gerar novos descendentes. É uma parte fundamental de como um algoritmo genético explora o espaço de soluções, misturando soluções existentes para encontrar melhores. Esta função atua como um despachante, chamando o método de cruzamento específico (por exemplo, uniforme, de um ponto) com base no parâmetro `crossover_type`."
+    },
+    {
+      "name": "load_mnist_dataset",
+      "doc": "Dataset* load_mnist_dataset(const char* image_path, const char* label_path)\\n\\nConceito:\\nCarrega o conjunto de dados MNIST a partir dos arquivos formatados IDX especificados. O conjunto de dados MNIST é um benchmark padrão em aprendizado de máquina. Esta função lida com os detalhes da leitura do formato de arquivo binário IDX, normalizando os valores dos pixels e codificando os rótulos em one-hot, para que o usuário possa se concentrar no treinamento do modelo."
+    },
+    {
+      "name": "create_dummy_dataset",
+      "doc": "Dataset* create_dummy_dataset(int num_items)\\n\\nConceito:\\nCria um conjunto de dados fictício com valores aleatórios para fins de teste. Isso é útil para testes de unidade e depuração. Permite testar o pipeline de carregamento e processamento de dados sem a necessidade do conjunto de dados MNIST real."
+    },
+    {
+      "name": "create_dummy_dataset_with_label",
+      "doc": "Dataset* create_dummy_dataset_with_label(int num_items, int label)\\n\\nConceito:\\nCria um conjunto de dados fictício com um rótulo específico para todos os itens. Isso é útil para testar se uma rede consegue se ajustar a uma única classe, o que é uma boa maneira de verificar se o modelo é capaz de aprender."
+    },
+    {
+      "name": "split_dataset",
+      "doc": "void split_dataset(const Dataset* original, int split_size, Dataset* out_dataset_1, Dataset* out_dataset_2)\\n\\nConceito:\\nDivide um conjunto de dados em dois novos conjuntos de dados, copiando os dados. Em aprendizado de máquina, é crucial avaliar um modelo em dados que ele não viu durante o treinamento. Esta função é usada para criar um conjunto de treinamento e um conjunto de validação a partir de um único conjunto de dados de origem, o que é uma prática padrão."
+    },
+    {
+      "name": "free_dataset",
+      "doc": "void free_dataset(Dataset* dataset)\\n\\nConceito:\\nLibera a memória alocada para um conjunto de dados. Em C, o gerenciamento de memória é manual. Esta função é essencial para evitar vazamentos de memória, desalocando o conjunto de dados e todos os seus componentes."
+    },
+    {
+      "name": "evo_create_initial_population",
+      "doc": "NeuralNetwork** evo_create_initial_population(int population_size, int num_layers, const int* architecture, ActivationType activation_hidden, ActivationType activation_output)\\n\\nConceito:\\nCria a população inicial de redes neurais aleatórias. Um algoritmo genético começa com um conjunto diversificado de soluções aleatórias. Esta função cria esse conjunto inicial de redes neurais, cada uma com uma inicialização aleatória diferente dos pesos."
+    },
+    {
+      "name": "evo_reproduce",
+      "doc": "NeuralNetwork** evo_reproduce(const NetworkFitness* fittest_networks, int num_fittest, int new_population_size, CrossoverType crossover_type, int tournament_size)\\n\\nConceito:\\nCria uma nova geração de redes através da seleção e cruzamento. Esta função implementa o princípio da 'sobrevivência do mais apto'. Ela seleciona as redes com melhor desempenho da geração atual e as combina (usando cruzamento) para criar a próxima geração de redes."
+    },
+    {
+      "name": "gann_get_last_error",
+      "doc": "GannError gann_get_last_error(void)\\n\\nConceito:\\nObtém o último erro que ocorreu na thread de chamada. Quando uma função da biblioteca falha, esta função pode ser chamada para recuperar um código de erro específico, que fornece mais detalhes sobre a causa da falha. Este é um padrão comum para tratamento de erros em bibliotecas C."
+    },
+    {
+      "name": "gann_error_to_string",
+      "doc": "const char* gann_error_to_string(GannError error_code)\\n\\nConceito:\\nConverte um código `GannError` em uma string legível por humanos e terminada em nulo. Isso é útil para registro e depuração, pois permite imprimir uma mensagem de erro descritiva em vez de apenas um código de erro."
+    },
+    {
+      "name": "create_matrix",
+      "doc": "Matrix* create_matrix(int rows, int cols)\\n\\nConceito:\\nCria uma nova matriz com todos os elementos inicializados em zero. Este é o construtor básico para uma matriz. Ele aloca a memória necessária e inicializa a matriz para um estado conhecido (todos zeros)."
+    },
+    {
+      "name": "free_matrix",
+      "doc": "void free_matrix(Matrix* m)\\n\\nConceito:\\nLibera a memória alocada para uma matriz. Em C, o gerenciamento de memória é manual. Esta função é essencial para evitar vazamentos de memória, desalocando a matriz e seus dados subjacentes."
+    },
+    {
+      "name": "print_matrix",
+      "doc": "void print_matrix(const Matrix* m)\\n\\nConceito:\\nImprime o conteúdo de uma matriz no console. Esta é uma função de utilidade útil para depuração e para entender o estado da rede em diferentes estágios do treinamento."
+    },
+    {
+      "name": "dot_product",
+      "doc": "Matrix* dot_product(const Matrix* m1, const Matrix* m2)\\n\\nConceito:\\nCalcula o produto escalar de duas matrizes. O produto escalar é uma operação fundamental em redes neurais. É usado para calcular a soma ponderada das entradas em cada neurônio."
+    },
+    {
+      "name": "add_bias",
+      "doc": "void add_bias(Matrix* m, const Matrix* bias)\\n\\nConceito:\\nAdiciona um vetor de viés (uma matriz de linha) a cada linha de uma matriz, no local. Em uma rede neural, o termo de viés é adicionado à soma ponderada das entradas. Esta operação aplica esse viés à saída de uma camada."
+    },
+    {
+      "name": "matrix_transpose",
+      "doc": "Matrix* matrix_transpose(const Matrix* m)\\n\\nConceito:\\nCria uma nova matriz que é a transposta da matriz de entrada. A transposta de uma matriz é usada em várias partes do algoritmo de retropropagação, particularmente no cálculo dos gradientes dos pesos."
+    },
+    {
+      "name": "matrix_elementwise_multiply",
+      "doc": "Matrix* matrix_elementwise_multiply(const Matrix* m1, const Matrix* m2)\\n\\nConceito:\\nRealiza a multiplicação elemento a elemento (produto de Hadamard) de duas matrizes. Esta operação é usada no algoritmo de retropropagação para combinar gradientes."
+    },
+    {
+      "name": "matrix_subtract",
+      "doc": "Matrix* matrix_subtract(const Matrix* m1, const Matrix* m2)\\n\\nConceito:\\nSubtrai a segunda matriz da primeira, elemento por elemento. Esta é uma operação básica de matriz usada em vários cálculos, incluindo o cálculo do erro entre a saída da rede e os rótulos verdadeiros."
+    },
+    {
+      "name": "matrix_add",
+      "doc": "Matrix* matrix_add(const Matrix* m1, const Matrix* m2)\\n\\nConceito:\\nAdiciona duas matrizes, elemento por elemento. Esta é uma operação básica de matriz usada em vários cálculos."
+    },
+    {
+      "name": "matrix_scale",
+      "doc": "Matrix* matrix_scale(const Matrix* m, double scalar)\\n\\nConceito:\\nDimensiona uma matriz multiplicando cada elemento por um valor escalar. Isso é usado na retropropagação para dimensionar os gradientes pela taxa de aprendizado."
+    },
+    {
+      "name": "matrix_from_array",
+      "doc": "Matrix* matrix_from_array(const double* array, int rows, int cols)\\n\\nConceito:\\nCria uma matriz a partir de uma matriz plana e 1D de dados. Esta é uma função de utilidade para converter dados de uma matriz simples para o formato de matriz usado pela biblioteca."
+    },
+    {
+      "name": "matrix_copy",
+      "doc": "Matrix* matrix_copy(const Matrix* m)\\n\\nConceito:\\nCria uma cópia profunda de uma matriz. Isso é útil quando você precisa modificar uma matriz sem alterar a original."
+    },
+    {
+      "name": "matrix_get_row",
+      "doc": "Matrix* matrix_get_row(const Matrix* m, int row)\\n\\nConceito:\\nExtrai uma única linha de uma matriz e a retorna como uma nova matriz 1xN. Isso é útil para processar dados uma amostra de cada vez."
+    },
+    {
+      "name": "matrix_copy_data",
+      "doc": "void matrix_copy_data(Matrix* dest, const Matrix* src)\\n\\nConceito:\\nCopia os dados de uma matriz de origem para uma matriz de destino. Esta é uma maneira mais eficiente de copiar dados de matriz do que criar uma nova matriz, pois evita a alocação de memória."
+    },
+    {
+      "name": "mutate_network",
+      "doc": "void mutate_network(NeuralNetwork* network, float mutation_rate, float mutation_chance, MutationType mutation_type, double mutation_std_dev, int current_gen, int max_gens, double fitness_std_dev)\\n\\nConceito:\\nRealiza a mutação dos pesos e vieses de uma rede neural no local. A mutação é um operador genético que introduz pequenas alterações aleatórias nos parâmetros da rede. Isso ajuda a manter a diversidade genética na população e evita que o algoritmo fique preso em ótimos locais. Esta função atua como um despachante, chamando o método de mutação específico com base no parâmetro `mutation_type`."
+    },
+    {
+      "name": "select_fittest",
+      "doc": "NetworkFitness* select_fittest(NetworkFitness* population_with_fitness, int population_size, int* num_fittest, SelectionType selection_type, int tournament_size)\\n\\nConceito:\\nSeleciona um grupo de indivíduos mais aptos de uma população para atuar como pais. A seleção é o processo de escolher quais indivíduos da geração atual serão os pais da próxima geração. Indivíduos mais aptos têm maior probabilidade de serem selecionados. Esta função atua como um despachante, chamando o método de seleção específico (por exemplo, torneio, elitismo) com base no parâmetro `selection_type`."
+    }
+  ]
+}

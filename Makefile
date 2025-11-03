@@ -1,11 +1,11 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Iinclude -Wall -O3 -fPIC
+CFLAGS = -Iinclude -Ilib/parson -Wall -O3 -fPIC
 LDFLAGS = -lm
 
 # --- Library ---
 LIB_NAME = gann
-LIB_SRCS = lib/gann_errors.c lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c lib/gann_docs.c
+LIB_SRCS = lib/gann_errors.c lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c lib/gann_docs.c lib/parson/parson.c
 LIB_OBJS = $(LIB_SRCS:.c=.o)
 STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so
@@ -18,7 +18,7 @@ GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
 GTK_LDFLAGS = $(shell pkg-config --libs gtk+-3.0)
 
 # --- Tests ---
-TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c test/test_genetic_operators.c test/test_data_loader.c test/test_gann_errors.c
+TEST_SRCS = test/test_runner.c test/test_matrix.c test/test_neural_network.c test/test_persistence.c test/test_evolution.c test/test_backpropagation.c test/test_optimizers.c test/test_genetic_operators.c test/test_data_loader.c test/test_gann_errors.c test/test_gann_docs.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 TEST_TARGET = test_runner
 

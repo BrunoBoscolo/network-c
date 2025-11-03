@@ -41,6 +41,9 @@ const char* data_loader_test_suite();
 // test_gann_errors.c
 const char* gann_errors_test_suite();
 
+// test_gann_docs.c
+const char* test_gann_docs_suite();
+
 // Add declarations for other test suites here
 
 // A function to run all test suites

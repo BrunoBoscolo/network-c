@@ -5,13 +5,13 @@ LDFLAGS = -lm
 
 # --- Library ---
 LIB_NAME = gann
-LIB_SRCS = lib/gann_errors.c lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c
+LIB_SRCS = lib/gann_errors.c lib/matrix.c lib/data_loader.c lib/evolution.c lib/neural_network.c lib/gann.c lib/backpropagation.c lib/gann_backprop.c lib/selection.c lib/crossover.c lib/mutation.c lib/gann_docs.c
 LIB_OBJS = $(LIB_SRCS:.c=.o)
 STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so
 
 # --- Examples ---
-EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation
+EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation examples/docs_example
 
 # GTK flags
 GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
@@ -76,6 +76,9 @@ examples/ex_adaptive_mutation: examples/ex_adaptive_mutation.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/backprop_progressive_epochs: examples/backprop_progressive_epochs.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+
+examples/docs_example: examples/docs_example.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 # Rule to compile library source files into object files

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gann.h"
+#include "utils.h"
 
 // Helper function to print time elapsed
 void print_time_elapsed(clock_t start, clock_t end) {
@@ -17,8 +18,19 @@ int main() {
 
     // --- 1. Load Data ---
     printf("Loading MNIST dataset...\n");
-    Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte");
-    Dataset* test_dataset = load_mnist_dataset("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte");
+    const char* data_prefix = find_data_path_prefix();
+    char train_images_path[256];
+    char train_labels_path[256];
+    char test_images_path[256];
+    char test_labels_path[256];
+
+    snprintf(train_images_path, sizeof(train_images_path), "%s%s", data_prefix, "train-images.idx3-ubyte");
+    snprintf(train_labels_path, sizeof(train_labels_path), "%s%s", data_prefix, "train-labels.idx1-ubyte");
+    snprintf(test_images_path, sizeof(test_images_path), "%s%s", data_prefix, "t10k-images.idx3-ubyte");
+    snprintf(test_labels_path, sizeof(test_labels_path), "%s%s", data_prefix, "t10k-labels.idx1-ubyte");
+
+    Dataset* train_dataset = load_mnist_dataset(train_images_path, train_labels_path);
+    Dataset* test_dataset = load_mnist_dataset(test_images_path, test_labels_path);
     if (!train_dataset || !test_dataset) {
         fprintf(stderr, "Failed to load MNIST data.\n");
         return 1;

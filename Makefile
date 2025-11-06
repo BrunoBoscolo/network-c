@@ -12,6 +12,7 @@ SHARED_LIB = lib$(LIB_NAME).so
 
 # --- Examples ---
 EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation examples/docs_example
+UTILS_OBJ = examples/utils.o
 
 # GTK flags
 GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
@@ -42,44 +43,48 @@ $(SHARED_LIB): $(LIB_OBJS)
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 # Rules for building examples
-examples/training: examples/training.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/training: examples/training.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/recognizer: examples/recognizer.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/recognizer: examples/recognizer.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/recognizer_gui: examples/recognizer_gui.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS) $(GTK_LDFLAGS)
+examples/recognizer_gui: examples/recognizer_gui.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS) $(GTK_LDFLAGS)
 
-examples/activations_comparison: examples/activations_comparison.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/activations_comparison: examples/activations_comparison.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/backprop_training: examples/backprop_training.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/backprop_training: examples/backprop_training.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/comparison: examples/comparison.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/comparison: examples/comparison.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/ex_tournament_selection: examples/ex_tournament_selection.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/ex_tournament_selection: examples/ex_tournament_selection.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/ex_uniform_crossover: examples/ex_uniform_crossover.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/ex_uniform_crossover: examples/ex_uniform_crossover.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/ex_arithmetic_crossover: examples/ex_arithmetic_crossover.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/ex_arithmetic_crossover: examples/ex_arithmetic_crossover.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/ex_non_uniform_mutation: examples/ex_non_uniform_mutation.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/ex_non_uniform_mutation: examples/ex_non_uniform_mutation.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/ex_adaptive_mutation: examples/ex_adaptive_mutation.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/ex_adaptive_mutation: examples/ex_adaptive_mutation.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
-examples/backprop_progressive_epochs: examples/backprop_progressive_epochs.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+examples/backprop_progressive_epochs: examples/backprop_progressive_epochs.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/docs_example: examples/docs_example.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -o $@ $(STATIC_LIB) $(LDFLAGS)
+
+# Rule to compile example utility files
+examples/utils.o: examples/utils.c examples/utils.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Rule to compile library source files into object files
 lib/%.o: lib/%.c
@@ -99,7 +104,7 @@ $(TEST_TARGET): $(TEST_OBJS) $(STATIC_LIB)
 # Clean rule
 clean:
 	rm -f lib/*.o $(STATIC_LIB) $(SHARED_LIB)
-	rm -f $(EXAMPLE_BINS)
+	rm -f $(EXAMPLE_BINS) examples/utils.o
 	rm -f test/*.o $(TEST_TARGET)
 
 .PHONY: all clean test libs examples

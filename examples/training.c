@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gann.h"
+#include "utils.h"
 
 int main() {
     // Seed the random number generator.
@@ -15,8 +16,13 @@ int main() {
     // --- 1. Load MNIST Data ---
     // The data loader is not part of the core GANN library, so it doesn't use the new error system.
     // We will check for errors in the traditional C way (checking for NULL).
-    Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte",
-                                                "data/train-labels.idx1-ubyte");
+    const char* data_prefix = find_data_path_prefix();
+    char train_images_path[256];
+    char train_labels_path[256];
+    snprintf(train_images_path, sizeof(train_images_path), "%s%s", data_prefix, "train-images.idx3-ubyte");
+    snprintf(train_labels_path, sizeof(train_labels_path), "%s%s", data_prefix, "train-labels.idx1-ubyte");
+
+    Dataset* train_dataset = load_mnist_dataset(train_images_path, train_labels_path);
     if (!train_dataset) {
         // Since data_loader doesn't use gann_errors, we print a generic message.
         fprintf(stderr, "Error: Failed to load training data. Check file paths and integrity.\n");

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gann.h"
+#include "utils.h"
 
 int main(int argc, char* argv[]) {
     printf("--- MNIST Number Recognizer (Simple API) ---\n");
@@ -24,7 +25,13 @@ int main(int argc, char* argv[]) {
     }
 
     // 2. Load the MNIST test dataset
-    Dataset* test_dataset = load_mnist_dataset("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte");
+    const char* data_prefix = find_data_path_prefix();
+    char test_images_path[256];
+    char test_labels_path[256];
+    snprintf(test_images_path, sizeof(test_images_path), "%s%s", data_prefix, "t10k-images.idx3-ubyte");
+    snprintf(test_labels_path, sizeof(test_labels_path), "%s%s", data_prefix, "t10k-labels.idx1-ubyte");
+
+    Dataset* test_dataset = load_mnist_dataset(test_images_path, test_labels_path);
     if (!test_dataset) {
         fprintf(stderr, "Error: Failed to load the MNIST test dataset. Check file paths and integrity.\n");
         nn_free(net);

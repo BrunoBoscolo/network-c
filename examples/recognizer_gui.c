@@ -2,6 +2,7 @@
 #include <gdk/gdk.h>
 #include "gann.h"
 #include <stdio.h>
+#include "utils.h"
 
 // --- Constants ---
 #define CANVAS_WIDTH 280
@@ -228,9 +229,12 @@ int main(int argc, char *argv[]) {
     model_status_label = gtk_label_new("Model: -"); // Initial text
 
     // Attempt to load the default neural network at the start
-    load_network(NETWORK_FILE);
+    const char* data_prefix = find_data_path_prefix();
+    char network_path[256];
+    snprintf(network_path, sizeof(network_path), "%s%s", data_prefix, NETWORK_FILE);
+    load_network(network_path);
     if (!net) {
-        fprintf(stderr, "INFO: Could not load the default network from '%s'.\n", NETWORK_FILE);
+        fprintf(stderr, "INFO: Could not load the default network from '%s'.\n", network_path);
         fprintf(stderr, "You can load a network using the 'Load Model' button.\n");
     }
 

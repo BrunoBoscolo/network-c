@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gann.h"
+#include "utils.h"
 
 int main() {
     // Seed the random number generator
@@ -10,8 +11,13 @@ int main() {
     printf("--- Example: Training with Tournament Selection ---\n");
 
     // --- 1. Load MNIST Data ---
-    Dataset* train_dataset = load_mnist_dataset("data/train-images.idx3-ubyte",
-                                                "data/train-labels.idx1-ubyte");
+    const char* data_prefix = find_data_path_prefix();
+    char train_images_path[256];
+    char train_labels_path[256];
+    snprintf(train_images_path, sizeof(train_images_path), "%s%s", data_prefix, "train-images.idx3-ubyte");
+    snprintf(train_labels_path, sizeof(train_labels_path), "%s%s", data_prefix, "train-labels.idx1-ubyte");
+
+    Dataset* train_dataset = load_mnist_dataset(train_images_path, train_labels_path);
     if (!train_dataset) {
         fprintf(stderr, "Failed to load training data.\n");
         return 1;

@@ -18,6 +18,9 @@ static gboolean dragging = FALSE;
 static GdkPixbuf *pixbuf = NULL;
 static gboolean render_as_image = FALSE;
 #define COMPLEXITY_THRESHOLD 5000
+#define RENDER_WIDTH 3840
+#define RENDER_HEIGHT 2160
+
 
 // --- Function Prototypes ---
 static void load_network(const char* filename);
@@ -31,17 +34,8 @@ static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpoint
 static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data);
-static gboolean configure_event_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data);
 
 // --- GUI Callbacks ---
-
-static gboolean configure_event_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
-    if (pixbuf) {
-        g_object_unref(pixbuf);
-        pixbuf = NULL;
-    }
-    return TRUE;
-}
 
 static void load_network(const char* filename) {
     if (net) {
@@ -170,10 +164,8 @@ static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpoint
 static void render_network_to_pixbuf() {
     if (!net || !drawing_area) return;
 
-    int width = gtk_widget_get_allocated_width(drawing_area);
-    int height = gtk_widget_get_allocated_height(drawing_area);
-
-    if (width <= 0 || height <= 0) return;
+    int width = RENDER_WIDTH;
+    int height = RENDER_HEIGHT;
 
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     cairo_t *cr = cairo_create(surface);
@@ -204,8 +196,12 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
         }
         if (pixbuf) {
             cairo_save(cr);
+            double pixbuf_width = gdk_pixbuf_get_width(pixbuf);
+            double widget_width = gtk_widget_get_allocated_width(widget);
+            double scale_factor = widget_width / pixbuf_width;
+
             cairo_translate(cr, pan_x * zoom, pan_y * zoom);
-            cairo_scale(cr, zoom, zoom);
+            cairo_scale(cr, zoom * scale_factor, zoom * scale_factor);
             gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
             cairo_paint(cr);
             cairo_restore(cr);
@@ -373,7 +369,6 @@ int main(int argc, char *argv[]) {
     g_signal_connect(drawing_area, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
     g_signal_connect(drawing_area, "button-release-event", G_CALLBACK(button_release_event_cb), NULL);
     g_signal_connect(drawing_area, "motion-notify-event", G_CALLBACK(motion_notify_event_cb), NULL);
-    g_signal_connect(drawing_area, "configure-event", G_CALLBACK(configure_event_cb), NULL);
     g_signal_connect(load_model_button, "clicked", G_CALLBACK(load_model_button_clicked), window);
     g_signal_connect(force_image_button, "clicked", G_CALLBACK(force_image_render_button_clicked), NULL);
 

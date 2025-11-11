@@ -11,6 +11,7 @@ const char* test_nn_creation();
 const char* test_nn_forward_pass();
 const char* test_gaussian_mutation();
 const char* test_nn_errors();
+const char* test_nn_linear_activation();
 
 // test_persistence.c
 const char* test_save_and_load_network();

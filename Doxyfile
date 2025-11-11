@@ -1,0 +1,10 @@
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = "Neural Network Library in C"
+PROJECT_NUMBER         = 1.0
+PROJECT_BRIEF          = "A simple feedforward neural network library"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = ./lib ./include
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES

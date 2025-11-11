@@ -11,3 +11,6 @@ examples/*
 
 # Other generated files
 trained_network.dat
+
+# Documentation
+docs/

@@ -15,6 +15,7 @@ const char* all_suites() {
     mu_run_test(test_nn_forward_pass);
     mu_run_test(test_gaussian_mutation);
     mu_run_test(test_nn_errors);
+    mu_run_test(test_nn_linear_activation);
 
     // Run tests from test_persistence.c
     mu_run_test(test_save_and_load_network);

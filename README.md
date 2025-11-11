@@ -34,6 +34,7 @@ The project's source code is located in the `lib/` directory, with public header
 - A C compiler (e.g., `gcc` or `clang`)
 - `make`
 - (Optional) `doxygen` for generating documentation.
+- (Optional) `libgtk-3-dev` for building the GUI example. On Debian/Ubuntu, you can install it with `sudo apt-get install libgtk-3-dev`.
 
 ### Building the Project
 The project uses a `Makefile` for building. The MNIST dataset is already included in the `data/` directory.
@@ -56,6 +57,7 @@ The project uses a `Makefile` for building. The MNIST dataset is already include
     ```bash
     ./backprop_training
     ```
+    This will train a new network and save it to `trained_network_backprop.dat`.
 
 3.  **Run the Number Recognizer**:
     ```bash

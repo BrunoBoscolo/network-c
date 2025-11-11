@@ -92,6 +92,36 @@ const char* test_nn_forward_pass() {
     return NULL;
 }
 
+const char* test_nn_linear_activation() {
+    int architecture[] = {2, 1};
+    NeuralNetwork* net = nn_create(2, architecture, RELU, LINEAR);
+    mu_assert("Failed to create network for linear activation test", net != NULL);
+
+    // Manually set weights and biases
+    net->weights[0]->data[0][0] = 0.5;
+    net->weights[0]->data[1][0] = -0.5;
+    net->biases[0]->data[0][0] = 0.1;
+
+    Matrix* input = create_matrix(1, 2);
+    input->data[0][0] = 10.0;
+    input->data[0][1] = 2.0;
+
+    // Expected output: (10.0 * 0.5) + (2.0 * -0.5) + 0.1 = 5.0 - 1.0 + 0.1 = 4.1
+    double expected_output = 4.1;
+
+    Matrix* output = nn_forward_pass(net, input);
+    mu_assert("Forward pass with LINEAR activation returned NULL", output != NULL);
+
+    double actual_output = output->data[0][0];
+    mu_assert("LINEAR activation forward pass is incorrect", fabs(actual_output - expected_output) < TEST_EPSILON);
+
+    nn_free(net);
+    free_matrix(input);
+    free_matrix(output);
+
+    return NULL;
+}
+
 // Test for neural network error handling
 const char* test_nn_errors() {
     // --- Suppress stderr for this test ---

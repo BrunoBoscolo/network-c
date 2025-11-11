@@ -11,9 +11,11 @@
 static double sigmoid(double x) { return 1.0 / (1.0 + exp(-x)); }
 static double relu(double x) { return x > 0 ? x : 0; }
 static double leaky_relu(double x) { return x > 0 ? x : 0.01 * x; }
+static double linear(double x) { return x; } // Identity function
 static double sigmoid_derivative(double x) { double s = sigmoid(x); return s * (1 - s); }
 static double relu_derivative(double x) { return x > 0 ? 1 : 0; }
 static double leaky_relu_derivative(double x) { return x > 0 ? 1 : 0.01; }
+static double linear_derivative(double x) { (void)x; return 1; } // Derivative is constant 1
 
 // --- Public API Functions ---
 
@@ -29,6 +31,7 @@ void nn_apply_activation(Matrix* m, ActivationType activation_type) {
                 case SIGMOID: *val = sigmoid(*val); break;
                 case RELU: *val = relu(*val); break;
                 case LEAKY_RELU: *val = leaky_relu(*val); break;
+                case LINEAR: *val = linear(*val); break;
             }
         }
     }
@@ -47,6 +50,7 @@ void nn_apply_activation_derivative(Matrix* m, ActivationType activation_type) {
                 case SIGMOID: *val = sigmoid_derivative(*val); break;
                 case RELU: *val = relu_derivative(*val); break;
                 case LEAKY_RELU: *val = leaky_relu_derivative(*val); break;
+                case LINEAR: *val = linear_derivative(*val); break;
             }
         }
     }

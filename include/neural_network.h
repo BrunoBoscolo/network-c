@@ -12,7 +12,8 @@
 typedef enum {
     SIGMOID,    /**< Sigmoid activation function. Maps input to a range between 0 and 1. */
     RELU,       /**< Rectified Linear Unit (ReLU) activation function. Returns `max(0, x)`. */
-    LEAKY_RELU  /**< Leaky ReLU activation function. A variant of ReLU that allows a small, non-zero gradient when the unit is not active. */
+    LEAKY_RELU,  /**< Leaky ReLU activation function. A variant of ReLU that allows a small, non-zero gradient when the unit is not active. */
+    LINEAR      /**< Linear activation function. Returns the input value unchanged. Useful for output layers in regression tasks. */
 } ActivationType;
 
 /**

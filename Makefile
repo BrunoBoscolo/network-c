@@ -107,4 +107,8 @@ clean:
 	rm -f $(EXAMPLE_BINS) examples/utils.o
 	rm -f test/*.o $(TEST_TARGET)
 
-.PHONY: all clean test libs examples
+# Doxygen documentation rule
+docs:
+	doxygen Doxyfile
+
+.PHONY: all clean test libs examples docs

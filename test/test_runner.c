@@ -44,6 +44,9 @@ const char* all_suites() {
     // Run tests from test_gann_errors.c
     mu_run_test(gann_errors_test_suite);
 
+    // Run tests from test_gann_docs.c
+    mu_run_test(gann_docs_test_suite);
+
     return NULL;
 }
 

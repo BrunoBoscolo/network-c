@@ -15,23 +15,44 @@ static double pan_y = 0.0;
 static double drag_start_x = 0;
 static double drag_start_y = 0;
 static gboolean dragging = FALSE;
+static GdkPixbuf *pixbuf = NULL;
+static gboolean render_as_image = FALSE;
+#define COMPLEXITY_THRESHOLD 5000
 
 // --- Function Prototypes ---
 static void load_network(const char* filename);
 static void load_model_button_clicked(GtkWidget *widget, gpointer data);
+static void force_image_render_button_clicked(GtkWidget *widget, gpointer data);
 static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data);
+static void render_network_to_pixbuf();
+static int get_network_complexity();
+static void draw_network_vector(cairo_t *cr, int width, int height);
 static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data);
 static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data);
+static gboolean configure_event_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data);
 
 // --- GUI Callbacks ---
+
+static gboolean configure_event_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
+    if (pixbuf) {
+        g_object_unref(pixbuf);
+        pixbuf = NULL;
+    }
+    return TRUE;
+}
 
 static void load_network(const char* filename) {
     if (net) {
         nn_free(net);
         net = NULL;
     }
+    if (pixbuf) {
+        g_object_unref(pixbuf);
+        pixbuf = NULL;
+    }
+    render_as_image = FALSE;
 
     net = nn_load(filename);
 
@@ -39,6 +60,11 @@ static void load_network(const char* filename) {
         char status_text[1024];
         g_snprintf(status_text, sizeof(status_text), "Model: %s", g_path_get_basename(filename));
         gtk_label_set_text(GTK_LABEL(model_status_label), status_text);
+
+        if (get_network_complexity() > COMPLEXITY_THRESHOLD) {
+            render_as_image = TRUE;
+        }
+
         gtk_widget_queue_draw(drawing_area); // Trigger a redraw
     } else {
         gtk_label_set_text(GTK_LABEL(model_status_label), "Error: Failed to load model.");
@@ -75,6 +101,26 @@ static void load_model_button_clicked(GtkWidget *widget, gpointer data) {
 
     gtk_widget_destroy(dialog);
 }
+
+static void force_image_render_button_clicked(GtkWidget *widget, gpointer data) {
+    render_as_image = TRUE;
+    if (pixbuf) {
+        g_object_unref(pixbuf);
+        pixbuf = NULL;
+    }
+    gtk_widget_queue_draw(drawing_area);
+}
+
+static int get_network_complexity() {
+    if (!net) return 0;
+
+    int complexity = 0;
+    for (int i = 0; i < net->num_layers - 1; i++) {
+        complexity += net->architecture[i] * net->architecture[i+1];
+    }
+    return complexity;
+}
+
 
 static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
     if (event->button == GDK_BUTTON_PRIMARY) {
@@ -121,8 +167,30 @@ static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpoint
     return TRUE;
 }
 
+static void render_network_to_pixbuf() {
+    if (!net || !drawing_area) return;
+
+    int width = gtk_widget_get_allocated_width(drawing_area);
+    int height = gtk_widget_get_allocated_height(drawing_area);
+
+    if (width <= 0 || height <= 0) return;
+
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    cairo_t *cr = cairo_create(surface);
+
+    draw_network_vector(cr, width, height);
+
+    if (pixbuf) {
+        g_object_unref(pixbuf);
+    }
+    pixbuf = gdk_pixbuf_get_from_surface(surface, 0, 0, width, height);
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(surface);
+}
+
+
 static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
-    // White background
     cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_paint(cr);
 
@@ -130,10 +198,32 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
         return FALSE;
     }
 
-    cairo_translate(cr, pan_x * zoom, pan_y * zoom);
-    cairo_scale(cr, zoom, zoom);
+    if (render_as_image) {
+        if (!pixbuf) {
+            render_network_to_pixbuf();
+        }
+        if (pixbuf) {
+            cairo_save(cr);
+            cairo_translate(cr, pan_x * zoom, pan_y * zoom);
+            cairo_scale(cr, zoom, zoom);
+            gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
+            cairo_paint(cr);
+            cairo_restore(cr);
+        }
+    } else {
+        cairo_save(cr);
+        cairo_translate(cr, pan_x * zoom, pan_y * zoom);
+        cairo_scale(cr, zoom, zoom);
+        draw_network_vector(cr, gtk_widget_get_allocated_width(widget), gtk_widget_get_allocated_height(widget));
+        cairo_restore(cr);
+    }
 
-    // --- Find min/max weights and biases for scaling ---
+    return FALSE;
+}
+
+static void draw_network_vector(cairo_t *cr, int width, int height) {
+     cairo_set_source_rgb(cr, 1, 1, 1);
+    cairo_paint(cr);
     double max_abs_weight = 0;
     double max_abs_bias = 0;
     for (int i = 0; i < net->num_layers - 1; i++) {
@@ -155,8 +245,6 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
 
     // --- Drawing Parameters ---
-    int width = gtk_widget_get_allocated_width(widget);
-    int height = gtk_widget_get_allocated_height(widget);
     int padding = 50;
     int layer_spacing = (net->num_layers > 1) ? (width - 2 * padding) / (net->num_layers - 1) : 0;
     double neuron_radius = 10;
@@ -247,10 +335,7 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
             }
         }
     }
-
-    return FALSE;
 }
-
 // --- Main Application Setup ---
 
 int main(int argc, char *argv[]) {
@@ -264,6 +349,7 @@ int main(int argc, char *argv[]) {
     drawing_area = gtk_drawing_area_new();
 
     GtkWidget *load_model_button = gtk_button_new_with_label("Load Model");
+    GtkWidget *force_image_button = gtk_button_new_with_label("Force Image Render");
     model_status_label = gtk_label_new("Model: -"); // Initial text
 
     // --- Layout ---
@@ -275,6 +361,7 @@ int main(int argc, char *argv[]) {
 
     // Pack buttons into the controls box
     gtk_box_pack_start(GTK_BOX(controls_hbox), load_model_button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(controls_hbox), force_image_button, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(controls_hbox), model_status_label, FALSE, FALSE, 5);
 
     gtk_container_add(GTK_CONTAINER(window), main_vbox);
@@ -286,7 +373,9 @@ int main(int argc, char *argv[]) {
     g_signal_connect(drawing_area, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
     g_signal_connect(drawing_area, "button-release-event", G_CALLBACK(button_release_event_cb), NULL);
     g_signal_connect(drawing_area, "motion-notify-event", G_CALLBACK(motion_notify_event_cb), NULL);
+    g_signal_connect(drawing_area, "configure-event", G_CALLBACK(configure_event_cb), NULL);
     g_signal_connect(load_model_button, "clicked", G_CALLBACK(load_model_button_clicked), window);
+    g_signal_connect(force_image_button, "clicked", G_CALLBACK(force_image_render_button_clicked), NULL);
 
     // Enable mouse events
     gtk_widget_set_events(drawing_area, gtk_widget_get_events(drawing_area) | GDK_SCROLL_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
@@ -299,6 +388,9 @@ int main(int argc, char *argv[]) {
     // --- Cleanup ---
     if (net) {
         nn_free(net);
+    }
+    if (pixbuf) {
+        g_object_unref(pixbuf);
     }
 
     return 0;

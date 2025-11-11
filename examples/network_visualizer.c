@@ -9,11 +9,21 @@
 static GtkWidget *drawing_area;
 static GtkWidget *model_status_label;
 static NeuralNetwork* net = NULL;
+static double zoom = 1.0;
+static double pan_x = 0.0;
+static double pan_y = 0.0;
+static double drag_start_x = 0;
+static double drag_start_y = 0;
+static gboolean dragging = FALSE;
 
 // --- Function Prototypes ---
 static void load_network(const char* filename);
 static void load_model_button_clicked(GtkWidget *widget, gpointer data);
 static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data);
+static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data);
+static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
+static gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
+static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 
 // --- GUI Callbacks ---
 
@@ -66,6 +76,51 @@ static void load_model_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_widget_destroy(dialog);
 }
 
+static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+    if (event->button == GDK_BUTTON_PRIMARY) {
+        dragging = TRUE;
+        drag_start_x = event->x;
+        drag_start_y = event->y;
+    }
+    return TRUE;
+}
+
+static gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+    if (event->button == GDK_BUTTON_PRIMARY) {
+        dragging = FALSE;
+    }
+    return TRUE;
+}
+
+static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
+    if (dragging) {
+        pan_x += (event->x - drag_start_x) / zoom;
+        pan_y += (event->y - drag_start_y) / zoom;
+        drag_start_x = event->x;
+        drag_start_y = event->y;
+        gtk_widget_queue_draw(widget);
+    }
+    return TRUE;
+}
+
+
+static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
+    double old_zoom = zoom;
+    if (event->direction == GDK_SCROLL_UP) {
+        zoom *= 1.1;
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+        zoom /= 1.1;
+    }
+
+    // Zoom relative to the mouse cursor
+    pan_x = event->x / old_zoom - event->x / zoom + pan_x;
+    pan_y = event->y / old_zoom - event->y / zoom + pan_y;
+
+
+    gtk_widget_queue_draw(widget);
+    return TRUE;
+}
+
 static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
     // White background
     cairo_set_source_rgb(cr, 1, 1, 1);
@@ -74,6 +129,9 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
     if (!net) {
         return FALSE;
     }
+
+    cairo_translate(cr, pan_x * zoom, pan_y * zoom);
+    cairo_scale(cr, zoom, zoom);
 
     // --- Find min/max weights and biases for scaling ---
     double max_abs_weight = 0;
@@ -132,6 +190,16 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
                 cairo_move_to(cr, layer_x, neuron_y);
                 cairo_line_to(cr, next_layer_x, next_neuron_y);
                 cairo_stroke(cr);
+
+                if (zoom > 5.0) {
+                    char weight_str[16];
+                    snprintf(weight_str, sizeof(weight_str), "%.2f", weight);
+                    cairo_save(cr);
+                    cairo_set_source_rgb(cr, 0, 0, 0);
+                    cairo_move_to(cr, (layer_x + next_layer_x) / 2, (neuron_y + next_neuron_y) / 2);
+                    cairo_show_text(cr, weight_str);
+                    cairo_restore(cr);
+                }
             }
         }
     }
@@ -167,6 +235,16 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
             cairo_set_source_rgb(cr, 0, 0, 0); // Black outline
             cairo_set_line_width(cr, 1.5);
             cairo_stroke(cr);
+
+            if (zoom > 5.0 && i > 0) {
+                char bias_str[16];
+                snprintf(bias_str, sizeof(bias_str), "%.2f", net->biases[i-1]->data[0][j]);
+                cairo_save(cr);
+                cairo_set_source_rgb(cr, 0, 0, 0);
+                cairo_move_to(cr, layer_x + neuron_radius + 2, neuron_y);
+                cairo_show_text(cr, bias_str);
+                cairo_restore(cr);
+            }
         }
     }
 
@@ -204,7 +282,14 @@ int main(int argc, char *argv[]) {
     // --- Connect Signals ---
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(drawing_area, "draw", G_CALLBACK(draw_network_cb), NULL);
+    g_signal_connect(drawing_area, "scroll-event", G_CALLBACK(scroll_event_cb), NULL);
+    g_signal_connect(drawing_area, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
+    g_signal_connect(drawing_area, "button-release-event", G_CALLBACK(button_release_event_cb), NULL);
+    g_signal_connect(drawing_area, "motion-notify-event", G_CALLBACK(motion_notify_event_cb), NULL);
     g_signal_connect(load_model_button, "clicked", G_CALLBACK(load_model_button_clicked), window);
+
+    // Enable mouse events
+    gtk_widget_set_events(drawing_area, gtk_widget_get_events(drawing_area) | GDK_SCROLL_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
 
 
     // --- Show and Run ---

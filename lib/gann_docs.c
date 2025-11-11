@@ -1,4 +1,5 @@
 #include "gann_docs.h"
+#include "gann_errors.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,5 +32,6 @@ char* gann_get_doc(const char* function_name, const char* lang) {
     }
 
     json_value_free(root_value);
+    gann_set_error(GANN_ERROR_DOCS_NOT_FOUND);
     return NULL;
 }

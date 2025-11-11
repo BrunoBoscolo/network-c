@@ -79,16 +79,11 @@ NeuralNetwork** evo_reproduce(const NetworkFitness* fittest_networks, int num_fi
         // Create a child using crossover
         NeuralNetwork* child = crossover(parent1, parent2, crossover_type);
         if (!child) {
-            // Crossover failed, clone parent instead. gann_get_error() should be set by crossover()
-            child = nn_clone(parent1);
-            if (!child) {
-                // Cloning also failed, this is a critical error.
-                for (int j = 0; j < i; j++) {
-                    nn_free(new_population[j]);
-                }
-                free(new_population);
-                return NULL;
+            for (int j = 0; j < i; j++) {
+                nn_free(new_population[j]);
             }
+            free(new_population);
+            return NULL;
         }
 
         new_population[i] = child;

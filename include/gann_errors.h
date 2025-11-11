@@ -36,7 +36,8 @@ typedef enum {
     GANN_ERROR_INVALID_ARCHITECTURE,/**< The specified neural network architecture is invalid (e.g., contains fewer than 2 layers). */
     GANN_ERROR_INVALID_DIMENSIONS,  /**< An operation could not be completed due to mismatched matrix or vector dimensions. */
     GANN_ERROR_INDEX_OUT_OF_BOUNDS, /**< An index used to access an array or matrix was outside the valid range. */
-    GANN_ERROR_INVALID_FILE_FORMAT  /**< A file being loaded has an invalid or corrupted format. */
+    GANN_ERROR_INVALID_FILE_FORMAT,  /**< A file being loaded has an invalid or corrupted format. */
+    GANN_ERROR_DOCS_NOT_FOUND  /**< The requested documentation was not found. */
 } GannError;
 
 

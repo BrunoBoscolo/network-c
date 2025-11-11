@@ -34,6 +34,7 @@ The project's source code is located in the `lib/` directory, with public header
 - A C compiler (e.g., `gcc` or `clang`)
 - `make`
 - (Optional) `doxygen` for generating documentation.
+- (Optional) `graphviz` for generating diagrams in the documentation.
 - (Optional) `libgtk-3-dev` for building the GUI example. On Debian/Ubuntu, you can install it with `sudo apt-get install libgtk-3-dev`.
 
 ### Building the Project
@@ -43,7 +44,7 @@ The project uses a `Makefile` for building. The MNIST dataset is already include
     ```bash
     make all
     ```
-    This will create several executables in the root directory, including `training` (for GA), `backprop_training` (for backprop), and `recognizer` (for evaluation).
+    This will create several executables in the `examples/` directory, including `training` (for GA), `backprop_training` (for backprop), and `recognizer` (for evaluation).
 
 ### Running the Application
 

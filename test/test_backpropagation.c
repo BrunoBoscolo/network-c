@@ -49,6 +49,9 @@ const char* test_calculate_mse() {
 }
 
 const char* test_backprop_early_stopping() {
+    // Seed the RNG to make this test deterministic
+    gann_seed_rng(42);
+
     // 1. Create two dummy datasets, one for training, one for validation
     Dataset* train_dataset = create_dummy_dataset_with_label(10, 0); // All labels are 0
     Dataset* validation_dataset = create_dummy_dataset_with_label(10, 1); // All labels are 1
@@ -59,7 +62,7 @@ const char* test_backprop_early_stopping() {
     GannBackpropParams params = {
         .architecture = ARCHITECTURE,
         .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
-        .learning_rate = 0.01,
+        .learning_rate = 0.05, // Increased learning rate for faster convergence
         .epochs = 50, // High number of epochs
         .batch_size = 1,
         .activation_hidden = RELU,
@@ -67,7 +70,7 @@ const char* test_backprop_early_stopping() {
         .optimizer_type = ADAM,
         .beta1 = 0.9, .beta2 = 0.999, .epsilon = 1e-8,
         .logging = true, // Enable logging to see the early stop message
-        .early_stopping_patience = 3,
+        .early_stopping_patience = 4, // Increased patience
         .early_stopping_threshold = 0.01
     };
 

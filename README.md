@@ -31,10 +31,52 @@ The project's source code is located in the `lib/` directory, with public header
 ## Getting Started
 
 ### Prerequisites
-- A C compiler (e.g., `gcc` or `clang`)
-- `make`
-- (Optional) `doxygen` for generating documentation.
-- (Optional) `libgtk-3-dev` for building the GUI example. On Debian/Ubuntu, you can install it with `sudo apt-get install libgtk-3-dev`.
+This project requires a C compiler and the `make` tool. The following instructions cover setup for both Linux (Debian/Ubuntu) and Windows.
+
+#### Linux (Debian/Ubuntu)
+On a Debian-based Linux distribution like Ubuntu, you can install all the necessary tools with the following command:
+```bash
+sudo apt-get update && sudo apt-get install -y build-essential
+```
+This will install `gcc`, `make`, and other essential build tools.
+
+To build the optional GUI example, you will also need to install the GTK+3 development libraries:
+```bash
+sudo apt-get install -y libgtk-3-dev
+```
+To generate the documentation, you will need Doxygen and Graphviz:
+```bash
+sudo apt-get install -y doxygen graphviz
+```
+
+#### Windows
+On Windows, we recommend using the **MSYS2** toolchain to create a Unix-like development environment.
+
+1.  **Install MSYS2**:
+    -   Download and run the installer from the [MSYS2 website](https://www.msys2.org/).
+    -   Follow the installation instructions, and once it's finished, open an MSYS2 terminal.
+
+2.  **Install the Toolchain**:
+    -   In the MSYS2 terminal, update the package database and core packages:
+        ```bash
+        pacman -Syu
+        ```
+        You may need to close and reopen the terminal if prompted.
+    -   Install the GCC compiler, make, and other development tools:
+        ```bash
+        pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
+        ```
+
+3.  **Install Optional Dependencies**:
+    -   To build the optional GUI example, install the GTK+3 development libraries:
+        ```bash
+        pacman -S mingw-w64-ucrt-x86_64-gtk3
+        ```
+    -   To generate documentation, install Doxygen and Graphviz:
+        ```bash
+        pacman -S mingw-w64-ucrt-x86_64-doxygen mingw-w64-ucrt-x86_64-graphviz
+        ```
+Once these steps are complete, you will have a full development environment and can proceed with building the project as described below.
 
 ### Building the Project
 The project uses a `Makefile` for building. The MNIST dataset is already included in the `data/` directory.
@@ -43,27 +85,27 @@ The project uses a `Makefile` for building. The MNIST dataset is already include
     ```bash
     make all
     ```
-    This will create several executables in the root directory, including `training` (for GA), `backprop_training` (for backprop), and `recognizer` (for evaluation).
+    This will create several executables in the `examples/` directory, including `training` (for GA), `backprop_training` (for backprop), and `recognizer` (for evaluation).
 
 ### Running the Application
 
 1.  **Train a new network with the Genetic Algorithm**:
     ```bash
-    ./training
+    ./examples/training
     ```
     This will train a new network and save the best one to `trained_network.dat`.
 
 2.  **Train a new network with Backpropagation**:
     ```bash
-    ./backprop_training
+    ./examples/backprop_training
     ```
     This will train a new network and save it to `trained_network_backprop.dat`.
 
 3.  **Run the Number Recognizer**:
     ```bash
-    ./recognizer
+    ./examples/recognizer
     ```
-    This will load the `trained_network.dat` file and evaluate its accuracy on the MNIST test set. You can also specify a different network file: `./recognizer my_network.dat`.
+    This will load the `trained_network.dat` file and evaluate its accuracy on the MNIST test set. You can also specify a different network file: `./examples/recognizer my_network.dat`.
 
 4.  **Run Other Examples**:
     The `examples/` directory contains several other executables for comparing genetic operators and activation functions. Use `make examples` to build them all.

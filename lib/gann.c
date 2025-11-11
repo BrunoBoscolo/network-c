@@ -263,6 +263,16 @@ NeuralNetwork* gann_evolve(const GannEvolveParams* params, const Dataset* train_
                 for (int i = 0; i < elitism_count; i++) {
                     new_population[children_to_create + i] = elite_networks[i];
                 }
+            } else {
+                // Handle realloc failure
+                gann_set_error(GANN_ERROR_ALLOC_FAILED);
+                // Free the original children and the elites since we can't combine them
+                for (int i = 0; i < children_to_create; i++) nn_free(new_population[i]);
+                free(new_population);
+                for (int i = 0; i < elitism_count; i++) nn_free(elite_networks[i]);
+                // Set population to NULL to prevent double frees in later cleanup
+                population = NULL;
+                break; // Exit the loop
             }
             free(elite_networks); // free the container for clones
         }

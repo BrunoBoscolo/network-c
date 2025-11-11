@@ -11,7 +11,7 @@ STATIC_LIB = lib$(LIB_NAME).a
 SHARED_LIB = lib$(LIB_NAME).so
 
 # --- Examples ---
-EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation examples/docs_example
+EXAMPLE_BINS = examples/training examples/recognizer examples/recognizer_gui examples/activations_comparison examples/backprop_training examples/backprop_progressive_epochs examples/comparison examples/ex_tournament_selection examples/ex_uniform_crossover examples/ex_arithmetic_crossover examples/ex_non_uniform_mutation examples/ex_adaptive_mutation examples/docs_example examples/network_visualizer
 UTILS_OBJ = examples/utils.o
 
 # GTK flags
@@ -50,6 +50,9 @@ examples/recognizer: examples/recognizer.c $(STATIC_LIB) $(UTILS_OBJ)
 	$(CC) $(CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS)
 
 examples/recognizer_gui: examples/recognizer_gui.c $(STATIC_LIB) $(UTILS_OBJ)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS) $(GTK_LDFLAGS)
+
+examples/network_visualizer: examples/network_visualizer.c $(STATIC_LIB) $(UTILS_OBJ)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) $< $(UTILS_OBJ) -o $@ $(STATIC_LIB) $(LDFLAGS) $(GTK_LDFLAGS)
 
 examples/activations_comparison: examples/activations_comparison.c $(STATIC_LIB) $(UTILS_OBJ)

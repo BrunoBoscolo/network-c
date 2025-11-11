@@ -3,6 +3,7 @@
 #include "gann.h"
 #include <stdio.h>
 #include "utils.h"
+#include <math.h>
 
 // --- Constants ---
 #define CANVAS_WIDTH 280
@@ -24,7 +25,8 @@ static void clear_grid();
 static void process_and_predict();
 static void load_network(const char* filename);
 static void load_model_button_clicked(GtkWidget *widget, gpointer data);
-static void save_grid_as_pgm(const char* filename);
+static void save_grid_as_pgm(const char* filename, double* data);
+static void preprocess_and_center_image(double* network_input);
 
 // --- GUI Callbacks ---
 
@@ -100,7 +102,6 @@ static void clear_button_clicked(GtkWidget *widget, gpointer data) {
  * @brief Callback for the "Predict" button.
  */
 static void predict_button_clicked(GtkWidget *widget, gpointer data) {
-    save_grid_as_pgm("drawn_digit.pgm");
     process_and_predict();
 }
 
@@ -175,33 +176,96 @@ static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event,
 
 // --- Image Processing and Prediction ---
 
+typedef struct {
+    int min_row, max_row, min_col, max_col;
+} BoundingBox;
+
 /**
- * @brief Saves the current grid to a PGM file to visualize the network input.
+ * @brief Finds the bounding box of the digit and calculates its center of mass,
+ *        then translates the digit to center it in the grid.
+ * @param network_input The output array to be filled with the centered image data.
  */
-static void save_grid_as_pgm(const char* filename) {
+static void preprocess_and_center_image(double* network_input) {
+    // 1. Find bounding box and center of mass
+    BoundingBox bbox = {GRID_SIZE, -1, GRID_SIZE, -1};
+    double total_mass = 0;
+    double weighted_row_sum = 0;
+    double weighted_col_sum = 0;
+
+    for (int r = 0; r < GRID_SIZE; r++) {
+        for (int c = 0; c < GRID_SIZE; c++) {
+            if (grid[r][c] == 1) {
+                if (r < bbox.min_row) bbox.min_row = r;
+                if (r > bbox.max_row) bbox.max_row = r;
+                if (c < bbox.min_col) bbox.min_col = c;
+                if (c > bbox.max_col) bbox.max_col = c;
+
+                total_mass += 1.0;
+                weighted_row_sum += r;
+                weighted_col_sum += c;
+            }
+        }
+    }
+
+    // Handle empty canvas
+    if (total_mass == 0) {
+        for (int i = 0; i < NETWORK_INPUT_SIZE; i++) {
+            network_input[i] = 0.0;
+        }
+        return;
+    }
+
+    double com_row = weighted_row_sum / total_mass;
+    double com_col = weighted_col_sum / total_mass;
+
+    // 2. Calculate translation offset
+    int offset_row = (int)round((GRID_SIZE / 2.0) - com_row);
+    int offset_col = (int)round((GRID_SIZE / 2.0) - com_col);
+
+    // 3. Create a new centered grid
+    double centered_grid[GRID_SIZE][GRID_SIZE] = {0};
+    for (int r = bbox.min_row; r <= bbox.max_row; r++) {
+        for (int c = bbox.min_col; c <= bbox.max_col; c++) {
+            if (grid[r][c] == 1) {
+                int new_row = r + offset_row;
+                int new_col = c + offset_col;
+
+                if (new_row >= 0 && new_row < GRID_SIZE && new_col >= 0 && new_col < GRID_SIZE) {
+                    centered_grid[new_row][new_col] = 1.0;
+                }
+            }
+        }
+    }
+
+    // 4. Flatten the centered grid into the network_input array
+    for (int r = 0; r < GRID_SIZE; r++) {
+        for (int c = 0; c < GRID_SIZE; c++) {
+            network_input[r * GRID_SIZE + c] = centered_grid[r][c];
+        }
+    }
+}
+
+
+/**
+ * @brief Saves a grid represented by a double array to a PGM file.
+ */
+static void save_grid_as_pgm(const char* filename, double* data) {
     FILE* fp = fopen(filename, "w");
     if (!fp) {
         fprintf(stderr, "Error: Could not open %s for writing.\n", filename);
         return;
     }
 
-    // PGM header
-    fprintf(fp, "P2\n");
-    fprintf(fp, "%d %d\n", GRID_SIZE, GRID_SIZE);
-    fprintf(fp, "255\n");
+    fprintf(fp, "P2\n%d %d\n255\n", GRID_SIZE, GRID_SIZE);
 
-    // Write pixel data (inverted: white digit on black background)
-    for (int row = 0; row < GRID_SIZE; row++) {
-        for (int col = 0; col < GRID_SIZE; col++) {
-            // This will create a PGM with a white digit on a black background,
-            // which is what the neural network should be seeing.
-            fprintf(fp, "%d ", grid[row][col] * 255);
+    for (int i = 0; i < NETWORK_INPUT_SIZE; i++) {
+        fprintf(fp, "%d ", (int)(data[i] * 255));
+        if ((i + 1) % GRID_SIZE == 0) {
+            fprintf(fp, "\n");
         }
-        fprintf(fp, "\n");
     }
-
     fclose(fp);
-    printf("Saved current drawing to %s\n", filename);
+    printf("Saved grid to %s\n", filename);
 }
 
 
@@ -209,19 +273,23 @@ static void save_grid_as_pgm(const char* filename) {
  * @brief Processes the grid data and runs prediction.
  */
 static void process_and_predict() {
-    // 1. Convert the grid state into a normalized flat array for the network.
-    // The user draws with black (grid value 1) on a white background (grid value 0).
-    // The network expects a white digit (input value 1.0) on a black background (input value 0.0).
-    // The grid values are already in the correct format (0 for background, 1 for digit),
-    // so we can map them directly.
     double network_input[NETWORK_INPUT_SIZE];
-    for (int row = 0; row < GRID_SIZE; row++) {
-        for (int col = 0; col < GRID_SIZE; col++) {
-            network_input[row * GRID_SIZE + col] = (double)grid[row][col];
+
+    // 1. Save the raw drawing before processing
+    double raw_input[NETWORK_INPUT_SIZE];
+    for (int i = 0; i < GRID_SIZE; i++) {
+        for (int j = 0; j < GRID_SIZE; j++) {
+            raw_input[i * GRID_SIZE + j] = (double)grid[i][j];
         }
     }
+    save_grid_as_pgm("drawn_digit_raw.pgm", raw_input);
 
-    // 2. Make a prediction
+    // 2. Center the image to match MNIST's format
+    preprocess_and_center_image(network_input);
+    save_grid_as_pgm("drawn_digit_centered.pgm", network_input);
+
+
+    // 3. Make a prediction
     if (!net) {
         fprintf(stderr, "Error: Network not loaded.\n");
         gtk_label_set_text(GTK_LABEL(prediction_label), "Error: Network not loaded");

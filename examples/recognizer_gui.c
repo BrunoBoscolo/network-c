@@ -24,6 +24,7 @@ static void clear_grid();
 static void process_and_predict();
 static void load_network(const char* filename);
 static void load_model_button_clicked(GtkWidget *widget, gpointer data);
+static void save_grid_as_pgm(const char* filename);
 
 // --- GUI Callbacks ---
 
@@ -99,6 +100,7 @@ static void clear_button_clicked(GtkWidget *widget, gpointer data) {
  * @brief Callback for the "Predict" button.
  */
 static void predict_button_clicked(GtkWidget *widget, gpointer data) {
+    save_grid_as_pgm("drawn_digit.pgm");
     process_and_predict();
 }
 
@@ -174,13 +176,44 @@ static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event,
 // --- Image Processing and Prediction ---
 
 /**
+ * @brief Saves the current grid to a PGM file to visualize the network input.
+ */
+static void save_grid_as_pgm(const char* filename) {
+    FILE* fp = fopen(filename, "w");
+    if (!fp) {
+        fprintf(stderr, "Error: Could not open %s for writing.\n", filename);
+        return;
+    }
+
+    // PGM header
+    fprintf(fp, "P2\n");
+    fprintf(fp, "%d %d\n", GRID_SIZE, GRID_SIZE);
+    fprintf(fp, "255\n");
+
+    // Write pixel data (inverted: white digit on black background)
+    for (int row = 0; row < GRID_SIZE; row++) {
+        for (int col = 0; col < GRID_SIZE; col++) {
+            // This will create a PGM with a white digit on a black background,
+            // which is what the neural network should be seeing.
+            fprintf(fp, "%d ", grid[row][col] * 255);
+        }
+        fprintf(fp, "\n");
+    }
+
+    fclose(fp);
+    printf("Saved current drawing to %s\n", filename);
+}
+
+
+/**
  * @brief Processes the grid data and runs prediction.
  */
 static void process_and_predict() {
     // 1. Convert the grid state into a normalized flat array for the network.
     // The user draws with black (grid value 1) on a white background (grid value 0).
     // The network expects a white digit (input value 1.0) on a black background (input value 0.0).
-    // Therefore, the grid values can be mapped directly to the network input.
+    // The grid values are already in the correct format (0 for background, 1 for digit),
+    // so we can map them directly.
     double network_input[NETWORK_INPUT_SIZE];
     for (int row = 0; row < GRID_SIZE; row++) {
         for (int col = 0; col < GRID_SIZE; col++) {

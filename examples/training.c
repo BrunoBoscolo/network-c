@@ -44,7 +44,7 @@ int main() {
     // For example, let's use a different activation function for the hidden layers
     // and run for fewer generations for a quicker example.
     params.activation_hidden = LEAKY_RELU;
-    params.num_generations = 50; // Default is 100
+    params.num_generations = 10; // Default is 100
 
     // --- New: Early Stopping ---
     // We can enable early stopping to prevent overfitting and save time.

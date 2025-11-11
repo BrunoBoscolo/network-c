@@ -34,6 +34,7 @@ The project's source code is located in the `lib/` directory, with public header
 - A C compiler (e.g., `gcc` or `clang`)
 - `make`
 - (Optional) `doxygen` for generating documentation.
+- (Optional) `libgtk-3-dev` for building the GUI example.
 
 ### Building the Project
 The project uses a `Makefile` for building. The MNIST dataset is already included in the `data/` directory.
@@ -70,6 +71,7 @@ The project uses a `Makefile` for building. The MNIST dataset is already include
     ./examples/activations_comparison
     ./examples/comparison
     ```
+    **Note:** The `recognizer_gui` example requires a graphical display and will not run in a headless environment.
 
 ### Running the Tests
 The project includes a test suite using the `minunit` framework. To run the tests:

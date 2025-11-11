@@ -48,7 +48,10 @@ const char* test_calculate_mse() {
     return NULL;
 }
 
+#include <time.h>
+
 const char* test_backprop_early_stopping() {
+    gann_seed_rng(0);
     // 1. Create two dummy datasets, one for training, one for validation
     Dataset* train_dataset = create_dummy_dataset_with_label(10, 0); // All labels are 0
     Dataset* validation_dataset = create_dummy_dataset_with_label(10, 1); // All labels are 1
@@ -59,15 +62,15 @@ const char* test_backprop_early_stopping() {
     GannBackpropParams params = {
         .architecture = ARCHITECTURE,
         .num_layers = sizeof(ARCHITECTURE) / sizeof(int),
-        .learning_rate = 0.01,
-        .epochs = 50, // High number of epochs
+        .learning_rate = 0.1,
+        .epochs = 100, // High number of epochs
         .batch_size = 1,
         .activation_hidden = RELU,
         .activation_output = SIGMOID,
         .optimizer_type = ADAM,
         .beta1 = 0.9, .beta2 = 0.999, .epsilon = 1e-8,
         .logging = true, // Enable logging to see the early stop message
-        .early_stopping_patience = 3,
+        .early_stopping_patience = 5,
         .early_stopping_threshold = 0.01
     };
 

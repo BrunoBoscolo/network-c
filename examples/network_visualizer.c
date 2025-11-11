@@ -5,10 +5,6 @@
 #include "utils.h"
 #include <math.h>
 
-// --- Constants ---
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-
 // --- Global Variables ---
 static GtkWidget *drawing_area;
 static GtkWidget *model_status_label;
@@ -101,8 +97,10 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
 
     // --- Drawing Parameters ---
+    int width = gtk_widget_get_allocated_width(widget);
+    int height = gtk_widget_get_allocated_height(widget);
     int padding = 50;
-    int layer_spacing = (net->num_layers > 1) ? (WINDOW_WIDTH - 2 * padding) / (net->num_layers - 1) : 0;
+    int layer_spacing = (net->num_layers > 1) ? (width - 2 * padding) / (net->num_layers - 1) : 0;
     double neuron_radius = 10;
 
     // --- Draw Connections ---
@@ -113,13 +111,13 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
         double next_layer_x = padding + (i + 1) * layer_spacing;
 
         for (int j = 0; j < neurons_in_next_layer; j++) {
-            double next_neuron_y = padding + j * (WINDOW_HEIGHT - 2 * padding) / (neurons_in_next_layer - 1);
-            if (neurons_in_next_layer == 1) next_neuron_y = WINDOW_HEIGHT / 2;
+            double next_neuron_y = padding + j * (height - 2 * padding) / (neurons_in_next_layer - 1);
+            if (neurons_in_next_layer == 1) next_neuron_y = height / 2;
 
 
             for (int k = 0; k < neurons_in_layer; k++) {
-                double neuron_y = padding + k * (WINDOW_HEIGHT - 2 * padding) / (neurons_in_layer - 1);
-                 if (neurons_in_layer == 1) neuron_y = WINDOW_HEIGHT / 2;
+                double neuron_y = padding + k * (height - 2 * padding) / (neurons_in_layer - 1);
+                 if (neurons_in_layer == 1) neuron_y = height / 2;
 
                 double weight = net->weights[i]->data[k][j];
                 double line_width = (max_abs_weight > 0) ? (fabs(weight) / max_abs_weight) * 5.0 : 0.5;
@@ -145,8 +143,8 @@ static gboolean draw_network_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
         double layer_x = padding + i * layer_spacing;
 
         for (int j = 0; j < neurons_in_layer; j++) {
-            double neuron_y = padding + j * (WINDOW_HEIGHT - 2 * padding) / (neurons_in_layer - 1);
-            if (neurons_in_layer == 1) neuron_y = WINDOW_HEIGHT / 2;
+            double neuron_y = padding + j * (height - 2 * padding) / (neurons_in_layer - 1);
+            if (neurons_in_layer == 1) neuron_y = height / 2;
 
 
             // Bias visualization
@@ -183,10 +181,9 @@ int main(int argc, char *argv[]) {
     // --- Create Widgets ---
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Neural Network Visualizer");
-    gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT);
+    gtk_window_maximize(GTK_WINDOW(window));
 
     drawing_area = gtk_drawing_area_new();
-    gtk_widget_set_size_request(drawing_area, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     GtkWidget *load_model_button = gtk_button_new_with_label("Load Model");
     model_status_label = gtk_label_new("Model: -"); // Initial text

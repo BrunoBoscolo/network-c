@@ -49,6 +49,7 @@ const char* test_calculate_mse() {
 }
 
 const char* test_backprop_early_stopping() {
+    gann_seed_rng(12345); // Seed the RNG to make the test deterministic
     // 1. Create two dummy datasets, one for training, one for validation
     Dataset* train_dataset = create_dummy_dataset_with_label(10, 0); // All labels are 0
     Dataset* validation_dataset = create_dummy_dataset_with_label(10, 1); // All labels are 1

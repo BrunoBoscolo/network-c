@@ -8,6 +8,10 @@
 // --- Global Variables ---
 static GtkWidget *drawing_area;
 static GtkWidget *model_status_label;
+static GtkWidget *text_view;
+static GtkWidget *scrolled_window;
+static GtkWidget *view_toggle_button;
+static gboolean is_matrix_view = FALSE;
 static NeuralNetwork* net = NULL;
 static double zoom = 1.0;
 static double pan_x = 0.0;
@@ -34,8 +38,82 @@ static gboolean scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpoint
 static gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data);
+static void update_matrix_view();
+static const char* get_activation_name(ActivationType type);
+static void toggle_view_cb(GtkToggleButton *button, gpointer data);
+
 
 // --- GUI Callbacks ---
+
+static void toggle_view_cb(GtkToggleButton *button, gpointer data) {
+    is_matrix_view = gtk_toggle_button_get_active(button);
+    if (is_matrix_view) {
+        gtk_widget_hide(drawing_area);
+        gtk_widget_show_all(scrolled_window);
+        gtk_button_set_label(GTK_BUTTON(button), "Switch to Graphical View");
+    } else {
+        gtk_widget_hide(scrolled_window);
+        gtk_widget_show(drawing_area);
+        gtk_button_set_label(GTK_BUTTON(button), "Switch to Matrix View");
+    }
+}
+
+static const char* get_activation_name(ActivationType type) {
+    switch (type) {
+        case SIGMOID: return "SIGMOID";
+        case RELU: return "RELU";
+        case LEAKY_RELU: return "LEAKY_RELU";
+        case LINEAR: return "LINEAR";
+        default: return "UNKNOWN";
+    }
+}
+
+static void update_matrix_view() {
+    if (!net) return;
+
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    GString *s = g_string_new("");
+
+    // --- Header ---
+    g_string_append_printf(s, "--- Neural Network Details ---\n\n");
+    g_string_append_printf(s, "Layers: %d\n", net->num_layers);
+    g_string_append_printf(s, "Hidden Activation: %s\n", get_activation_name(net->activation_hidden));
+    g_string_append_printf(s, "Output Activation: %s\n\n", get_activation_name(net->activation_output));
+
+    // --- Architecture ---
+    g_string_append_printf(s, "Architecture: [");
+    for (int i = 0; i < net->num_layers; i++) {
+        g_string_append_printf(s, "%d%s", net->architecture[i], (i == net->num_layers - 1) ? "" : ", ");
+    }
+    g_string_append_printf(s, "]\n\n");
+
+    // --- Weights and Biases ---
+    for (int i = 0; i < net->num_layers - 1; i++) {
+        g_string_append_printf(s, "--- Layer %d -> %d ---\n", i, i + 1);
+
+        // Weights
+        g_string_append_printf(s, "Weights (%dx%d):\n", net->weights[i]->rows, net->weights[i]->cols);
+        for (int r = 0; r < net->weights[i]->rows; r++) {
+            g_string_append_printf(s, "  [");
+            for (int c = 0; c < net->weights[i]->cols; c++) {
+                g_string_append_printf(s, "%8.4f%s", net->weights[i]->data[r][c], (c == net->weights[i]->cols - 1) ? "" : ", ");
+            }
+            g_string_append_printf(s, "]\n");
+        }
+
+        // Biases
+        g_string_append_printf(s, "\nBiases (1x%d):\n", net->biases[i]->cols);
+        g_string_append_printf(s, "  [");
+        for (int c = 0; c < net->biases[i]->cols; c++) {
+            g_string_append_printf(s, "%8.4f%s", net->biases[i]->data[0][c], (c == net->biases[i]->cols - 1) ? "" : ", ");
+        }
+        g_string_append_printf(s, "]\n\n");
+    }
+
+    gtk_text_buffer_set_text(buffer, s->str, -1);
+    g_string_free(s, TRUE);
+}
+
 
 static void load_network(const char* filename) {
     if (net) {
@@ -58,7 +136,7 @@ static void load_network(const char* filename) {
         if (get_network_complexity() > COMPLEXITY_THRESHOLD) {
             render_as_image = TRUE;
         }
-
+        update_matrix_view();
         gtk_widget_queue_draw(drawing_area); // Trigger a redraw
     } else {
         gtk_label_set_text(GTK_LABEL(model_status_label), "Error: Failed to load model.");
@@ -347,6 +425,16 @@ int main(int argc, char *argv[]) {
     GtkWidget *load_model_button = gtk_button_new_with_label("Load Model");
     GtkWidget *force_image_button = gtk_button_new_with_label("Force Image Render");
     model_status_label = gtk_label_new("Model: -"); // Initial text
+    view_toggle_button = gtk_toggle_button_new_with_label("Switch to Matrix View");
+
+    // Create the text view for matrix display (initially hidden)
+    scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+    text_view = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text_view), FALSE);
+    gtk_container_add(GTK_CONTAINER(scrolled_window), text_view);
+    gtk_widget_set_vexpand(scrolled_window, TRUE);
+
 
     // --- Layout ---
     GtkWidget *main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -354,10 +442,13 @@ int main(int argc, char *argv[]) {
 
     gtk_box_pack_start(GTK_BOX(main_vbox), controls_hbox, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), drawing_area, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 0);
+
 
     // Pack buttons into the controls box
     gtk_box_pack_start(GTK_BOX(controls_hbox), load_model_button, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(controls_hbox), force_image_button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(controls_hbox), view_toggle_button, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(controls_hbox), model_status_label, FALSE, FALSE, 5);
 
     gtk_container_add(GTK_CONTAINER(window), main_vbox);
@@ -371,6 +462,8 @@ int main(int argc, char *argv[]) {
     g_signal_connect(drawing_area, "motion-notify-event", G_CALLBACK(motion_notify_event_cb), NULL);
     g_signal_connect(load_model_button, "clicked", G_CALLBACK(load_model_button_clicked), window);
     g_signal_connect(force_image_button, "clicked", G_CALLBACK(force_image_render_button_clicked), NULL);
+    g_signal_connect(view_toggle_button, "toggled", G_CALLBACK(toggle_view_cb), NULL);
+
 
     // Enable mouse events
     gtk_widget_set_events(drawing_area, gtk_widget_get_events(drawing_area) | GDK_SCROLL_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
@@ -378,6 +471,7 @@ int main(int argc, char *argv[]) {
 
     // --- Show and Run ---
     gtk_widget_show_all(window);
+    gtk_widget_hide(scrolled_window); // Start with the matrix view hidden
     gtk_main();
 
     // --- Cleanup ---
